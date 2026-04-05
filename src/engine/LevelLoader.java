@@ -15,6 +15,8 @@ public class LevelLoader {
     private int levelWidth = 960;
     private List<Rectangle> platforms = new ArrayList<>();
     private List<Collectible> collectibles = new ArrayList<>();
+    private List<float[]> pinkStarSpawns = new ArrayList<>();
+    private List<float[]> crabbySpawns = new ArrayList<>();
 
     public LevelLoader(String filePath) {
         load(filePath);
@@ -60,6 +62,18 @@ public class LevelLoader {
                             Float.parseFloat(parts[1].trim())
                         ));
                         break;
+                    case "pinkstars":
+                        pinkStarSpawns.add(new float[]{
+                            Float.parseFloat(parts[0].trim()),
+                            Float.parseFloat(parts[1].trim())
+                        });
+                        break;
+                    case "crabbies":
+                        crabbySpawns.add(new float[]{
+                            Float.parseFloat(parts[0].trim()),
+                            Float.parseFloat(parts[1].trim())
+                        });
+                        break;
                 }
             }
         } catch (IOException e) {
@@ -71,4 +85,6 @@ public class LevelLoader {
     public int getLevelWidth() { return levelWidth; }
     public List<Rectangle> getPlatforms() { return platforms; }
     public List<Collectible> getCollectibles() { return collectibles; }
+    public List<float[]> getPinkStarSpawns() { return pinkStarSpawns; }
+    public List<float[]> getCrabbySpawns() { return crabbySpawns; }
 }

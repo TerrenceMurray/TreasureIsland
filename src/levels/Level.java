@@ -4,18 +4,25 @@ import entities.Player;
 import entities.collectibles.Collectible;
 import entities.collectibles.Diamond;
 import entities.collectibles.HealthPotion;
+import entities.enemies.Enemy;
+import entities.enemies.PinkStar;
+import entities.enemies.Crabby;
 import engine.Camera;
+import engine.GameConfig;
 import engine.GameStateManager;
 import engine.LevelLoader;
+import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
 import java.util.List;
+import java.util.ArrayList;
 
 public abstract class Level {
 
     protected Player player;
     protected List<Rectangle> platforms;
     protected List<Collectible> collectibles;
+    protected List<Enemy> enemies;
     protected Camera camera;
     protected int levelWidth;
 
@@ -28,6 +35,14 @@ public abstract class Level {
         this.levelWidth = loader.getLevelWidth();
         player.setLevelWidth(levelWidth);
         camera.setLevelWidth(levelWidth);
+
+        this.enemies = new ArrayList<>();
+        for (float[] pos : loader.getPinkStarSpawns()) {
+            enemies.add(new PinkStar(pos[0], pos[1], player));
+        }
+        for (float[] pos : loader.getCrabbySpawns()) {
+            enemies.add(new Crabby(pos[0], pos[1], player));
+        }
     }
 
     public void update() {
@@ -35,7 +50,43 @@ public abstract class Level {
         player.update();
         applyPlatformCollisions(prevY);
         checkCollectiblePickups();
+        updateEnemies();
+        checkCombat();
         camera.update(player);
+    }
+
+    private void updateEnemies() {
+        for (Enemy e : enemies) {
+            if (!e.isDead()) e.update();
+        }
+    }
+
+    private void checkCombat() {
+        GameStateManager gsm = GameStateManager.getInstance();
+        Rectangle playerBounds = player.getBounds();
+        Rectangle attackBounds = player.getAttackBounds();
+
+        for (Enemy e : enemies) {
+            if (e.isDead()) continue;
+
+            // Player attack hits enemy — once per swing
+            if (attackBounds != null && !player.hasAttackHit() && attackBounds.intersects(e.getBounds())) {
+                e.takeDamage(1);
+                player.setAttackHit();
+                if (e.isDead()) {
+                    if (e instanceof PinkStar) {
+                        gsm.addScore(GameConfig.getInstance().getInt("score.pinkStar", 75));
+                    } else if (e instanceof Crabby) {
+                        gsm.addScore(GameConfig.getInstance().getInt("score.crabby", 100));
+                    }
+                }
+            }
+
+            // Enemy contact damages player
+            if (!e.isDead() && e.canDealDamage() && playerBounds.intersects(e.getBounds())) {
+                player.takeDamage(e.getDamage());
+            }
+        }
     }
 
     private void checkCollectiblePickups() {
@@ -92,13 +143,18 @@ public abstract class Level {
         int offsetX = (int) camera.getX();
         g.translate(-offsetX, 0);
 
-        g.setColor(new java.awt.Color(100, 70, 40));
+        g.setColor(new Color(100, 70, 40));
         for (Rectangle plat : platforms) {
             g.fillRect(plat.x, plat.y, plat.width, plat.height);
         }
         for (Collectible c : collectibles) {
             if (!c.isCollected()) {
                 c.draw(g);
+            }
+        }
+        for (Enemy e : enemies) {
+            if (!e.isDead()) {
+                e.draw(g);
             }
         }
         player.draw(g);

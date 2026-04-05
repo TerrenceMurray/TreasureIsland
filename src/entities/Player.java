@@ -21,7 +21,10 @@ public class Player extends GameEntity implements Attackable {
     private boolean left, right, jumping;
     private boolean inAir;
     private boolean attacking;
+    private boolean attackHit;
     private int attackTick;
+    private int damageCooldown;
+    private static final int DAMAGE_COOLDOWN_MAX = 60;
 
     public Player(float x, float y) {
         super(x, y,
@@ -58,6 +61,8 @@ public class Player extends GameEntity implements Attackable {
                 attackTick = 0;
             }
         }
+
+        if (damageCooldown > 0) damageCooldown--;
 
         if (x < 0) x = 0;
         if (x + width > levelWidth) x = levelWidth - width;
@@ -97,8 +102,10 @@ public class Player extends GameEntity implements Attackable {
 
     @Override
     public void takeDamage(int amount) {
+        if (damageCooldown > 0) return;
         health -= amount;
         if (health < 0) health = 0;
+        damageCooldown = DAMAGE_COOLDOWN_MAX;
     }
 
     @Override
@@ -113,6 +120,7 @@ public class Player extends GameEntity implements Attackable {
     public void attack() {
         if (!attacking) {
             attacking = true;
+            attackHit = false;
             attackTick = 0;
         }
     }
@@ -124,4 +132,6 @@ public class Player extends GameEntity implements Attackable {
     public int getHealth() { return health; }
     public int getMaxHealth() { return MAX_HEALTH; }
     public boolean isAttacking() { return attacking; }
+    public boolean hasAttackHit() { return attackHit; }
+    public void setAttackHit() { attackHit = true; }
 }

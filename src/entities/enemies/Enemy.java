@@ -27,4 +27,5 @@ public abstract class Enemy extends GameEntity implements Attackable {
     }
 
     public int getDamage() { return damage; }
+    public boolean canDealDamage() { return true; }
 }

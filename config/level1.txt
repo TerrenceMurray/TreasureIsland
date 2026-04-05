@@ -55,3 +55,25 @@ width,2880
 390,195
 1260,260
 2560,260
+
+[pinkstars]
+# Section 1 - ground patrol
+300,450
+# Section 2 - on platform and ground
+900,450
+1050,315
+# Section 3
+1550,450
+1750,315
+# Section 4
+2200,450
+
+[crabbies]
+# Section 1
+550,450
+# Section 2
+1150,450
+# Section 3
+1800,450
+# Section 4
+2500,450
