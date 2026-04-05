@@ -1,27 +1,33 @@
 package entities;
 
 import interfaces.Attackable;
-import engine.GameLoop;
+import engine.GameConfig;
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
 
 public class Player extends GameEntity implements Attackable {
 
-    private static final float MOVE_SPEED = 4f;
-    private static final float JUMP_FORCE = -10f;
-    private static final float GRAVITY = 0.5f;
-    private static final int MAX_HEALTH = 4;
+    private static final GameConfig CFG = GameConfig.getInstance();
+    private static final float MOVE_SPEED = CFG.getFloat("player.speed", 4f);
+    private static final float JUMP_FORCE = -CFG.getFloat("player.jumpForce", 10f);
+    private static final float GRAVITY = CFG.getFloat("player.gravity", 0.5f);
+    private static final int MAX_HEALTH = CFG.getInt("player.health", 4);
+    private static final int ATTACK_DURATION = CFG.getInt("player.attackDuration", 15);
+    private static final int ATTACK_WIDTH = CFG.getInt("player.attackWidth", 20);
+    private static final int ATTACK_HEIGHT = CFG.getInt("player.attackHeight", 20);
+    private static final int GAME_WIDTH = CFG.getInt("game.width", 960);
 
     private int health;
     private boolean left, right, jumping;
     private boolean inAir;
     private boolean attacking;
     private int attackTick;
-    private static final int ATTACK_DURATION = 15;
 
     public Player(float x, float y) {
-        super(x, y, 40, 56);
+        super(x, y,
+            CFG.getInt("player.width", 40),
+            CFG.getInt("player.height", 56));
         this.health = MAX_HEALTH;
         this.inAir = true;
     }
@@ -49,9 +55,8 @@ public class Player extends GameEntity implements Attackable {
             }
         }
 
-        // Screen boundary clamping (horizontal)
         if (x < 0) x = 0;
-        if (x + width > GameLoop.GAME_WIDTH) x = GameLoop.GAME_WIDTH - width;
+        if (x + width > GAME_WIDTH) x = GAME_WIDTH - width;
     }
 
     public void landOn(float floorY) {
@@ -70,21 +75,20 @@ public class Player extends GameEntity implements Attackable {
 
     @Override
     public void draw(Graphics2D g) {
-        // Placeholder: colored rectangle
         g.setColor(Color.BLUE);
         g.fillRect((int) x, (int) y, width, height);
 
         if (attacking) {
             g.setColor(Color.CYAN);
-            int attackX = right || !left ? (int) x + width : (int) x - 20;
-            g.fillRect(attackX, (int) y + 10, 20, 20);
+            int attackX = right || !left ? (int) x + width : (int) x - ATTACK_WIDTH;
+            g.fillRect(attackX, (int) y + 10, ATTACK_WIDTH, ATTACK_HEIGHT);
         }
     }
 
     public Rectangle getAttackBounds() {
         if (!attacking) return null;
-        int attackX = right || !left ? (int) x + width : (int) x - 20;
-        return new Rectangle(attackX, (int) y + 10, 20, 20);
+        int attackX = right || !left ? (int) x + width : (int) x - ATTACK_WIDTH;
+        return new Rectangle(attackX, (int) y + 10, ATTACK_WIDTH, ATTACK_HEIGHT);
     }
 
     @Override

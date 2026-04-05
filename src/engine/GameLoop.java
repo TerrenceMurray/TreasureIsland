@@ -15,9 +15,10 @@ import java.awt.image.BufferedImage;
 
 public class GameLoop extends JPanel implements Runnable, KeyListener {
 
-    public static final int GAME_WIDTH = 960;
-    public static final int GAME_HEIGHT = 540;
-    private static final int TARGET_FPS = 60;
+    private static final GameConfig CFG = GameConfig.getInstance();
+    public static final int GAME_WIDTH = CFG.getInt("game.width", 960);
+    public static final int GAME_HEIGHT = CFG.getInt("game.height", 540);
+    private static final int TARGET_FPS = CFG.getInt("game.fps", 60);
     private static final long OPTIMAL_TIME = 1_000_000_000 / TARGET_FPS;
 
     private Thread gameThread;
@@ -36,7 +37,10 @@ public class GameLoop extends JPanel implements Runnable, KeyListener {
 
         buffer = new BufferedImage(GAME_WIDTH, GAME_HEIGHT, BufferedImage.TYPE_INT_ARGB);
 
-        player = new Player(100, 400);
+        player = new Player(
+            CFG.getFloat("player.spawnX", 100),
+            CFG.getFloat("player.spawnY", 400)
+        );
         currentLevel = new Level1(player);
     }
 
@@ -98,7 +102,6 @@ public class GameLoop extends JPanel implements Runnable, KeyListener {
     private void render() {
         Graphics2D g2 = buffer.createGraphics();
 
-        // Background
         g2.setColor(new Color(135, 206, 235));
         g2.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
 
@@ -106,13 +109,14 @@ public class GameLoop extends JPanel implements Runnable, KeyListener {
 
         // HUD: health hearts
         for (int i = 0; i < player.getMaxHealth(); i++) {
-            if (i < player.getHealth()) {
-                g2.setColor(Color.RED);
-            } else {
-                g2.setColor(Color.DARK_GRAY);
-            }
+            g2.setColor(i < player.getHealth() ? Color.RED : Color.DARK_GRAY);
             g2.fillOval(10 + i * 30, 10, 20, 20);
         }
+
+        // HUD: score
+        g2.setColor(Color.WHITE);
+        g2.setFont(g2.getFont().deriveFont(18f));
+        g2.drawString("Score: " + GameStateManager.getInstance().getScore(), GAME_WIDTH - 140, 28);
 
         g2.dispose();
     }
@@ -122,8 +126,6 @@ public class GameLoop extends JPanel implements Runnable, KeyListener {
         super.paintComponent(g);
         g.drawImage(buffer, 0, 0, null);
     }
-
-    // --- KeyListener ---
 
     @Override
     public void keyPressed(KeyEvent e) {
