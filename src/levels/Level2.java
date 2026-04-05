@@ -1,11 +1,12 @@
 package levels;
 
 import entities.Player;
+import engine.Camera;
 
 public class Level2 extends Level {
 
-    public Level2(Player player) {
-        super(player, "config/level2.txt");
+    public Level2(Player player, Camera camera) {
+        super(player, camera, "config/level2.txt");
     }
 
     @Override

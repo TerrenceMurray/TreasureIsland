@@ -37,7 +37,4 @@ public class GameConfig {
         return Float.parseFloat(val.trim());
     }
 
-    public String getString(String key, String defaultVal) {
-        return props.getProperty(key, defaultVal);
-    }
 }

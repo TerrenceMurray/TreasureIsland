@@ -12,6 +12,7 @@ import java.util.ArrayList;
 
 public class LevelLoader {
 
+    private int levelWidth = 960;
     private List<Rectangle> platforms = new ArrayList<>();
     private List<Collectible> collectibles = new ArrayList<>();
 
@@ -34,6 +35,11 @@ public class LevelLoader {
 
                 String[] parts = line.split(",");
                 switch (section) {
+                    case "level":
+                        if (parts[0].trim().equals("width")) {
+                            levelWidth = Integer.parseInt(parts[1].trim());
+                        }
+                        break;
                     case "platforms":
                         platforms.add(new Rectangle(
                             Integer.parseInt(parts[0].trim()),
@@ -62,6 +68,7 @@ public class LevelLoader {
         }
     }
 
+    public int getLevelWidth() { return levelWidth; }
     public List<Rectangle> getPlatforms() { return platforms; }
     public List<Collectible> getCollectibles() { return collectibles; }
 }

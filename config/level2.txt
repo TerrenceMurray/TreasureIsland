@@ -1,5 +1,8 @@
+[level]
+width,2880
+
 [platforms]
-0,480,960,60
+0,480,2880,60
 
 [diamonds]
 

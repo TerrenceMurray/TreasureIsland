@@ -4,24 +4,30 @@ import entities.Player;
 import entities.collectibles.Collectible;
 import entities.collectibles.Diamond;
 import entities.collectibles.HealthPotion;
+import engine.Camera;
 import engine.GameStateManager;
 import engine.LevelLoader;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
 import java.util.List;
-import java.util.ArrayList;
 
 public abstract class Level {
 
     protected Player player;
     protected List<Rectangle> platforms;
     protected List<Collectible> collectibles;
+    protected Camera camera;
+    protected int levelWidth;
 
-    public Level(Player player, String levelFile) {
+    public Level(Player player, Camera camera, String levelFile) {
         this.player = player;
+        this.camera = camera;
         LevelLoader loader = new LevelLoader(levelFile);
         this.platforms = loader.getPlatforms();
         this.collectibles = loader.getCollectibles();
+        this.levelWidth = loader.getLevelWidth();
+        player.setLevelWidth(levelWidth);
+        camera.setLevelWidth(levelWidth);
     }
 
     public void update() {
@@ -29,6 +35,7 @@ public abstract class Level {
         player.update();
         applyPlatformCollisions(prevY);
         checkCollectiblePickups();
+        camera.update(player);
     }
 
     private void checkCollectiblePickups() {
@@ -82,20 +89,21 @@ public abstract class Level {
     }
 
     public void draw(Graphics2D g) {
-        drawPlatforms(g);
+        int offsetX = (int) camera.getX();
+        g.translate(-offsetX, 0);
+
+        g.setColor(new java.awt.Color(100, 70, 40));
+        for (Rectangle plat : platforms) {
+            g.fillRect(plat.x, plat.y, plat.width, plat.height);
+        }
         for (Collectible c : collectibles) {
             if (!c.isCollected()) {
                 c.draw(g);
             }
         }
         player.draw(g);
-    }
 
-    protected void drawPlatforms(Graphics2D g) {
-        g.setColor(new java.awt.Color(100, 70, 40));
-        for (Rectangle plat : platforms) {
-            g.fillRect(plat.x, plat.y, plat.width, plat.height);
-        }
+        g.translate(offsetX, 0);
     }
 
     public abstract boolean isComplete();

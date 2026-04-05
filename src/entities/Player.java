@@ -16,8 +16,7 @@ public class Player extends GameEntity implements Attackable {
     private static final int ATTACK_DURATION = CFG.getInt("player.attackDuration", 15);
     private static final int ATTACK_WIDTH = CFG.getInt("player.attackWidth", 20);
     private static final int ATTACK_HEIGHT = CFG.getInt("player.attackHeight", 20);
-    private static final int GAME_WIDTH = CFG.getInt("game.width", 960);
-
+    private int levelWidth;
     private int health;
     private boolean left, right, jumping;
     private boolean inAir;
@@ -30,6 +29,11 @@ public class Player extends GameEntity implements Attackable {
             CFG.getInt("player.height", 56));
         this.health = MAX_HEALTH;
         this.inAir = true;
+        this.levelWidth = CFG.getInt("game.width", 960);
+    }
+
+    public void setLevelWidth(int levelWidth) {
+        this.levelWidth = levelWidth;
     }
 
     @Override
@@ -56,7 +60,7 @@ public class Player extends GameEntity implements Attackable {
         }
 
         if (x < 0) x = 0;
-        if (x + width > GAME_WIDTH) x = GAME_WIDTH - width;
+        if (x + width > levelWidth) x = levelWidth - width;
     }
 
     public void landOn(float floorY) {

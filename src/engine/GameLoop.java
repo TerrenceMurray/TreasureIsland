@@ -27,6 +27,7 @@ public class GameLoop extends JPanel implements Runnable, KeyListener {
     private BufferedImage buffer;
 
     private Player player;
+    private Camera camera;
     private Level currentLevel;
 
     public GameLoop() {
@@ -41,7 +42,8 @@ public class GameLoop extends JPanel implements Runnable, KeyListener {
             CFG.getFloat("player.spawnX", 100),
             CFG.getFloat("player.spawnY", 400)
         );
-        currentLevel = new Level1(player);
+        camera = new Camera(GAME_WIDTH, GAME_WIDTH);
+        currentLevel = new Level1(player, camera);
     }
 
     public void start() {
@@ -63,34 +65,21 @@ public class GameLoop extends JPanel implements Runnable, KeyListener {
     @Override
     public void run() {
         long lastTime = System.nanoTime();
-        long fpsTimer = System.nanoTime();
-        int frames = 0;
 
         while (running) {
             long now = System.nanoTime();
-            long elapsed = now - lastTime;
 
-            if (elapsed >= OPTIMAL_TIME) {
+            if (now - lastTime >= OPTIMAL_TIME) {
                 lastTime = now;
                 update();
                 render();
                 repaint();
-                frames++;
             } else {
                 try {
-                    long sleepTime = (OPTIMAL_TIME - elapsed) / 1_000_000;
-                    if (sleepTime > 0) {
-                        Thread.sleep(sleepTime);
-                    }
+                    Thread.sleep(1);
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
                 }
-            }
-
-            if (now - fpsTimer >= 1_000_000_000) {
-                System.out.println("FPS: " + frames);
-                frames = 0;
-                fpsTimer = now;
             }
         }
     }
