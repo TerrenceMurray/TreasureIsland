@@ -1,12 +1,19 @@
 package engine;
 
+import entities.Player;
+import levels.Level;
+import levels.Level1;
+
 import javax.swing.JPanel;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Dimension;
+import java.awt.Color;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 import java.awt.image.BufferedImage;
 
-public class GameLoop extends JPanel implements Runnable {
+public class GameLoop extends JPanel implements Runnable, KeyListener {
 
     public static final int GAME_WIDTH = 960;
     public static final int GAME_HEIGHT = 540;
@@ -18,12 +25,19 @@ public class GameLoop extends JPanel implements Runnable {
 
     private BufferedImage buffer;
 
+    private Player player;
+    private Level currentLevel;
+
     public GameLoop() {
         setPreferredSize(new Dimension(GAME_WIDTH, GAME_HEIGHT));
         setFocusable(true);
         requestFocusInWindow();
+        addKeyListener(this);
 
         buffer = new BufferedImage(GAME_WIDTH, GAME_HEIGHT, BufferedImage.TYPE_INT_ARGB);
+
+        player = new Player(100, 400);
+        currentLevel = new Level1(player);
     }
 
     public void start() {
@@ -78,11 +92,28 @@ public class GameLoop extends JPanel implements Runnable {
     }
 
     private void update() {
+        currentLevel.update();
     }
 
     private void render() {
         Graphics2D g2 = buffer.createGraphics();
-        g2.clearRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+
+        // Background
+        g2.setColor(new Color(135, 206, 235));
+        g2.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+
+        currentLevel.draw(g2);
+
+        // HUD: health hearts
+        for (int i = 0; i < player.getMaxHealth(); i++) {
+            if (i < player.getHealth()) {
+                g2.setColor(Color.RED);
+            } else {
+                g2.setColor(Color.DARK_GRAY);
+            }
+            g2.fillOval(10 + i * 30, 10, 20, 20);
+        }
+
         g2.dispose();
     }
 
@@ -91,4 +122,50 @@ public class GameLoop extends JPanel implements Runnable {
         super.paintComponent(g);
         g.drawImage(buffer, 0, 0, null);
     }
+
+    // --- KeyListener ---
+
+    @Override
+    public void keyPressed(KeyEvent e) {
+        switch (e.getKeyCode()) {
+            case KeyEvent.VK_A:
+            case KeyEvent.VK_LEFT:
+                player.setLeft(true);
+                break;
+            case KeyEvent.VK_D:
+            case KeyEvent.VK_RIGHT:
+                player.setRight(true);
+                break;
+            case KeyEvent.VK_W:
+            case KeyEvent.VK_UP:
+            case KeyEvent.VK_SPACE:
+                player.setJumping(true);
+                break;
+            case KeyEvent.VK_SHIFT:
+                player.attack();
+                break;
+        }
+    }
+
+    @Override
+    public void keyReleased(KeyEvent e) {
+        switch (e.getKeyCode()) {
+            case KeyEvent.VK_A:
+            case KeyEvent.VK_LEFT:
+                player.setLeft(false);
+                break;
+            case KeyEvent.VK_D:
+            case KeyEvent.VK_RIGHT:
+                player.setRight(false);
+                break;
+            case KeyEvent.VK_W:
+            case KeyEvent.VK_UP:
+            case KeyEvent.VK_SPACE:
+                player.setJumping(false);
+                break;
+        }
+    }
+
+    @Override
+    public void keyTyped(KeyEvent e) {}
 }
