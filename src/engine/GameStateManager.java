@@ -1,4 +1,41 @@
 package engine;
 
 public class GameStateManager {
+
+    private static GameStateManager instance;
+
+    private String currentState;
+    private int score;
+
+    private GameStateManager() {
+        currentState = "MENU";
+        score = 0;
+    }
+
+    public static GameStateManager getInstance() {
+        if (instance == null) {
+            instance = new GameStateManager();
+        }
+        return instance;
+    }
+
+    public void setState(String state) {
+        this.currentState = state;
+    }
+
+    public String getState() {
+        return currentState;
+    }
+
+    public void addScore(int points) {
+        this.score += points;
+    }
+
+    public int getScore() {
+        return score;
+    }
+
+    public void resetScore() {
+        this.score = 0;
+    }
 }
