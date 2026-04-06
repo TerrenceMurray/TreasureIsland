@@ -1,84 +1,72 @@
 [level]
-width,2880
+width,3200
 
 [platforms]
-# Ground spans the full level
-0,480,2880,64
-# Section 1
-120,410,192,20
-350,345,192,20
-570,280,192,20
-300,215,192,20
-# Section 2
-800,410,192,20
-1020,345,192,20
-1200,280,192,20
-# Section 3
-1450,410,192,20
-1650,345,192,20
-1850,280,192,20
-1700,200,192,20
-# Section 4
-2100,410,192,20
-2350,345,192,20
-2550,280,192,20
+# Main deck (ground)
+0,480,3200,64
+# Upper deck — left section
+0,352,384,20
+# Mast platforms — stepping up
+512,416,192,20
+768,352,192,20
+512,288,192,20
+# Mid-deck platforms
+1088,384,192,20
+1344,320,192,20
+# Lower hanging platforms
+1600,416,192,20
+1856,416,192,20
+# Upper right platforms
+2048,352,192,20
+2304,288,192,20
+# Boss arena wall
+2688,352,192,128
 
 [diamonds]
-# Section 1
-170,390
-200,390
-400,325
-430,325
-620,260
-650,260
-360,195
-# Section 2
-850,390
-880,390
-1070,325
-1250,260
-1280,260
-# Section 3
-1500,390
-1700,325
-1900,260
-1750,180
-1780,180
-# Section 4
-2150,390
-2180,390
-2400,325
-2600,260
-2630,260
+# Upper deck
+128,332
+192,332
+# Mast area
+576,396
+832,332
+576,268
+# Mid platforms
+1152,364
+1408,300
+# Hanging platforms
+1664,396
+1920,396
+# Upper right
+2112,332
+2368,268
+# Ground scatter
+960,460
+1500,460
+2000,460
 
 [potions]
-390,195
-850,390
-1260,260
-1900,260
-2560,260
+# Hidden on high mast
+576,268
+# Mid level
+1408,300
+# Before boss
+2560,460
 
 [pinkstars]
-# Section 1 - ground patrol
-300,450
-# Section 2 - on platform and ground
-900,450
-1050,315
-# Section 3
-1550,450
-1750,315
-# Section 4
-2200,450
+# Main deck patrols
+320,450
+960,450
+1500,450
+# On platforms
+1152,354
+2112,322
 
 [crabbies]
-# Section 1
-550,450
-# Section 2
-1150,450
-# Section 3
+# Main deck
+700,450
+1200,450
 1800,450
-# Section 4
-2500,450
+2400,450
 
 [boss]
-2780,416
+2800,416

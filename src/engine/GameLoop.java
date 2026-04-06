@@ -44,12 +44,9 @@ public class GameLoop extends JPanel implements Runnable, KeyListener {
 
         buffer = new BufferedImage(GAME_WIDTH, GAME_HEIGHT, BufferedImage.TYPE_INT_ARGB);
 
-        player = new Player(
-            CFG.getFloat("player.spawnX", 100),
-            CFG.getFloat("player.spawnY", 400)
-        );
+        player = new Player(64, 280);
         camera = new Camera(GAME_WIDTH, GAME_WIDTH);
-        currentLevel = new Level1(player, camera);
+        currentLevel = new Level2(player, camera);
     }
 
     public void start() {
@@ -119,10 +116,7 @@ public class GameLoop extends JPanel implements Runnable, KeyListener {
                 levelNumber = 2;
                 GameStateManager.getInstance().addScore(
                     CFG.getInt("score.levelComplete1", 200));
-                player = new Player(
-                    CFG.getFloat("player.spawnX", 100),
-                    CFG.getFloat("player.spawnY", 400)
-                );
+                player = new Player(64, 280);
                 currentLevel = new Level2(player, camera);
                 GameStateManager.getInstance().setState("PLAYING");
             }

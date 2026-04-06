@@ -236,7 +236,7 @@ public abstract class Level {
 
         for (Rectangle plat : platforms) {
             if (playerBounds.intersects(plat)) {
-                if (player.getVelocityY() >= 0 && prevBottom <= plat.y + 2 && playerBottom >= plat.y) {
+                if (player.getVelocityY() >= 0 && prevBottom <= plat.y + 10 && playerBottom >= plat.y) {
                     player.landOn(plat.y);
                     onPlatform = true;
                     break;

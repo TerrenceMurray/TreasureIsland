@@ -13,6 +13,12 @@ public class Level1 extends Level {
         super(player, camera, "config/level1.txt",
             "assets/Treasure Hunters/Palm Tree Island/Sprites/Background/BG Image.png",
             "The Pirate Ship");
+
+        // Sparse back trees — pirate ship setting, just a few in the distance
+        palmTrees.setBackPlacements(new int[][] {
+            {2800, 480, 0},
+            {3000, 480, 2},
+        });
     }
 
     @Override

@@ -12,6 +12,15 @@ public class TreasureRoom extends Level {
             "assets/Treasure Hunters/Palm Tree Island/Sprites/Background/BG Image.png",
             "The Treasure");
         collectibles.add(new TreasureChest(460, 452));
+
+        palmTrees.setBackPlacements(new int[][] {
+            {150, 480, 0},
+            {700, 480, 3},
+        });
+        palmTrees.setFrontPlacements(new int[][] {
+            {50, 480, 4, 0},
+            {800, 480, 4, 2},
+        });
     }
 
     @Override
