@@ -24,7 +24,7 @@ public class Player extends GameEntity implements Attackable {
     private boolean attackHit;
     private int attackTick;
     private int damageCooldown;
-    private static final int DAMAGE_COOLDOWN_MAX = 60;
+    private static final int DAMAGE_COOLDOWN_MAX = 90;
 
     public Player(float x, float y) {
         super(x, y,

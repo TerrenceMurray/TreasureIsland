@@ -3,12 +3,15 @@ package engine;
 import entities.Player;
 import levels.Level;
 import levels.Level1;
+import levels.Level2;
+import levels.TreasureRoom;
 
 import javax.swing.JPanel;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Dimension;
 import java.awt.Color;
+import java.awt.Font;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.image.BufferedImage;
@@ -29,6 +32,9 @@ public class GameLoop extends JPanel implements Runnable, KeyListener {
     private Player player;
     private Camera camera;
     private Level currentLevel;
+    private int levelNumber = 1;
+    private int transitionTimer;
+    private static final int TRANSITION_DELAY = 120;
 
     public GameLoop() {
         setPreferredSize(new Dimension(GAME_WIDTH, GAME_HEIGHT));
@@ -85,29 +91,96 @@ public class GameLoop extends JPanel implements Runnable, KeyListener {
     }
 
     private void update() {
-        currentLevel.update();
+        String state = GameStateManager.getInstance().getState();
+
+        if (state.equals("PLAYING")) {
+            currentLevel.update();
+
+            if (player.isDead()) {
+                GameStateManager.getInstance().setState("GAME_OVER");
+            } else if (currentLevel.isComplete()) {
+                if (levelNumber == 2) {
+                    // Go straight to treasure room, no delay
+                    levelNumber = 3;
+                    GameStateManager.getInstance().addScore(
+                        CFG.getInt("score.levelComplete2", 500));
+                    player = new Player(100, 400);
+                    currentLevel = new TreasureRoom(player, camera);
+                } else if (levelNumber == 3) {
+                    GameStateManager.getInstance().setState("VICTORY");
+                } else {
+                    GameStateManager.getInstance().setState("LEVEL_COMPLETE");
+                    transitionTimer = 0;
+                }
+            }
+        } else if (state.equals("LEVEL_COMPLETE")) {
+            transitionTimer++;
+            if (transitionTimer >= TRANSITION_DELAY) {
+                levelNumber = 2;
+                GameStateManager.getInstance().addScore(
+                    CFG.getInt("score.levelComplete1", 200));
+                player = new Player(
+                    CFG.getFloat("player.spawnX", 100),
+                    CFG.getFloat("player.spawnY", 400)
+                );
+                currentLevel = new Level2(player, camera);
+                GameStateManager.getInstance().setState("PLAYING");
+            }
+        }
     }
 
     private void render() {
         Graphics2D g2 = buffer.createGraphics();
+        String state = GameStateManager.getInstance().getState();
 
         g2.setColor(new Color(135, 206, 235));
         g2.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
 
-        currentLevel.draw(g2);
+        if (state.equals("MENU")) {
+            drawMenu(g2);
+        } else if (state.equals("PLAYING") || state.equals("LEVEL_COMPLETE")) {
+            currentLevel.draw(g2);
+            drawHUD(g2);
 
-        // HUD: health hearts
-        for (int i = 0; i < player.getMaxHealth(); i++) {
-            g2.setColor(i < player.getHealth() ? Color.RED : Color.DARK_GRAY);
-            g2.fillOval(10 + i * 30, 10, 20, 20);
+            if (state.equals("LEVEL_COMPLETE")) {
+                drawCenteredText(g2, "Level Complete!", 48, Color.YELLOW, GAME_HEIGHT / 2 - 20);
+            }
+        } else if (state.equals("GAME_OVER")) {
+            drawEndScreen(g2, "Game Over");
+        } else if (state.equals("VICTORY")) {
+            drawEndScreen(g2, "Victory!");
         }
 
-        // HUD: score
-        g2.setColor(Color.WHITE);
-        g2.setFont(g2.getFont().deriveFont(18f));
-        g2.drawString("Score: " + GameStateManager.getInstance().getScore(), GAME_WIDTH - 140, 28);
-
         g2.dispose();
+    }
+
+    private void drawMenu(Graphics2D g) {
+        drawCenteredText(g, "Treasure Island", 48, Color.WHITE, GAME_HEIGHT / 2 - 40);
+        drawCenteredText(g, "Press ENTER to Play", 20, Color.WHITE, GAME_HEIGHT / 2 + 20);
+        drawCenteredText(g, "Press Q to Quit", 16, Color.GRAY, GAME_HEIGHT / 2 + 60);
+    }
+
+    private void drawEndScreen(Graphics2D g, String title) {
+        drawCenteredText(g, title, 48, Color.WHITE, GAME_HEIGHT / 2 - 40);
+        drawCenteredText(g, "Score: " + GameStateManager.getInstance().getScore(), 24, Color.YELLOW, GAME_HEIGHT / 2 + 10);
+        drawCenteredText(g, "Press Q to Quit", 16, Color.GRAY, GAME_HEIGHT / 2 + 60);
+    }
+
+    private void drawHUD(Graphics2D g) {
+        for (int i = 0; i < player.getMaxHealth(); i++) {
+            g.setColor(i < player.getHealth() ? Color.RED : Color.DARK_GRAY);
+            g.fillOval(10 + i * 30, 10, 20, 20);
+        }
+        g.setColor(Color.WHITE);
+        g.setFont(g.getFont().deriveFont(18f));
+        g.drawString("Score: " + GameStateManager.getInstance().getScore(), GAME_WIDTH - 140, 28);
+    }
+
+    private void drawCenteredText(Graphics2D g, String text, int size, Color color, int y) {
+        g.setColor(color);
+        g.setFont(new Font("Arial", Font.BOLD, size));
+        int textWidth = g.getFontMetrics().stringWidth(text);
+        g.drawString(text, (GAME_WIDTH - textWidth) / 2, y);
     }
 
     @Override
@@ -118,6 +191,24 @@ public class GameLoop extends JPanel implements Runnable, KeyListener {
 
     @Override
     public void keyPressed(KeyEvent e) {
+        String state = GameStateManager.getInstance().getState();
+
+        if (state.equals("MENU")) {
+            if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+                GameStateManager.getInstance().setState("PLAYING");
+            } else if (e.getKeyCode() == KeyEvent.VK_Q) {
+                System.exit(0);
+            }
+            return;
+        }
+
+        if (state.equals("GAME_OVER") || state.equals("VICTORY")) {
+            if (e.getKeyCode() == KeyEvent.VK_Q) {
+                System.exit(0);
+            }
+            return;
+        }
+
         switch (e.getKeyCode()) {
             case KeyEvent.VK_A:
             case KeyEvent.VK_LEFT:

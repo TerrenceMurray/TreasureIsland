@@ -17,6 +17,7 @@ public class LevelLoader {
     private List<Collectible> collectibles = new ArrayList<>();
     private List<float[]> pinkStarSpawns = new ArrayList<>();
     private List<float[]> crabbySpawns = new ArrayList<>();
+    private float[] bossSpawn = null;
 
     public LevelLoader(String filePath) {
         load(filePath);
@@ -74,6 +75,12 @@ public class LevelLoader {
                             Float.parseFloat(parts[1].trim())
                         });
                         break;
+                    case "boss":
+                        bossSpawn = new float[]{
+                            Float.parseFloat(parts[0].trim()),
+                            Float.parseFloat(parts[1].trim())
+                        };
+                        break;
                 }
             }
         } catch (IOException e) {
@@ -87,4 +94,5 @@ public class LevelLoader {
     public List<Collectible> getCollectibles() { return collectibles; }
     public List<float[]> getPinkStarSpawns() { return pinkStarSpawns; }
     public List<float[]> getCrabbySpawns() { return crabbySpawns; }
+    public float[] getBossSpawn() { return bossSpawn; }
 }

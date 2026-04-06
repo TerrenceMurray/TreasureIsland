@@ -1,0 +1,11 @@
+[level]
+width,960
+
+[platforms]
+0,480,960,60
+
+[diamonds]
+
+[potions]
+
+[boss]

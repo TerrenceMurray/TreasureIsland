@@ -4,7 +4,9 @@ import entities.Player;
 import entities.collectibles.Collectible;
 import entities.collectibles.Diamond;
 import entities.collectibles.HealthPotion;
+import entities.collectibles.TreasureChest;
 import entities.enemies.Enemy;
+import entities.enemies.Boss;
 import entities.enemies.PinkStar;
 import entities.enemies.Crabby;
 import engine.Camera;
@@ -23,8 +25,10 @@ public abstract class Level {
     protected List<Rectangle> platforms;
     protected List<Collectible> collectibles;
     protected List<Enemy> enemies;
+    protected Boss boss;
     protected Camera camera;
     protected int levelWidth;
+    protected boolean complete;
 
     public Level(Player player, Camera camera, String levelFile) {
         this.player = player;
@@ -43,14 +47,26 @@ public abstract class Level {
         for (float[] pos : loader.getCrabbySpawns()) {
             enemies.add(new Crabby(pos[0], pos[1], player));
         }
+
+        float[] bossPos = loader.getBossSpawn();
+        if (bossPos != null) {
+            boss = createBoss(bossPos[0], bossPos[1]);
+        }
     }
 
+    protected abstract Boss createBoss(float x, float y);
+
     public void update() {
+        if (complete) return;
+
         float prevY = player.getY();
         player.update();
         applyPlatformCollisions(prevY);
         checkCollectiblePickups();
         updateEnemies();
+        if (boss != null && !boss.isDead()) {
+            boss.update();
+        }
         checkCombat();
         camera.update(player);
     }
@@ -68,8 +84,6 @@ public abstract class Level {
 
         for (Enemy e : enemies) {
             if (e.isDead()) continue;
-
-            // Player attack hits enemy — once per swing
             if (attackBounds != null && !player.hasAttackHit() && attackBounds.intersects(e.getBounds())) {
                 e.takeDamage(1);
                 player.setAttackHit();
@@ -81,24 +95,42 @@ public abstract class Level {
                     }
                 }
             }
-
-            // Enemy contact damages player
             if (!e.isDead() && e.canDealDamage() && playerBounds.intersects(e.getBounds())) {
                 player.takeDamage(e.getDamage());
             }
         }
+
+        // Boss combat
+        if (boss != null && !boss.isDead()) {
+            if (attackBounds != null && !player.hasAttackHit() && attackBounds.intersects(boss.getBounds())) {
+                boss.takeDamage(1);
+                player.setAttackHit();
+                if (boss.isDead()) {
+                    onBossDefeated();
+                }
+            }
+            if (!boss.isDead() && boss.canDealDamage() && playerBounds.intersects(boss.getBounds())) {
+                player.takeDamage(boss.getDamage());
+            }
+        }
     }
+
+    protected abstract void onBossDefeated();
 
     private void checkCollectiblePickups() {
         Rectangle playerBounds = player.getBounds();
+        GameStateManager gsm = GameStateManager.getInstance();
         for (Collectible c : collectibles) {
             if (c.isCollected()) continue;
             if (playerBounds.intersects(c.getBounds())) {
                 c.collect();
                 if (c instanceof Diamond) {
-                    GameStateManager.getInstance().addScore(((Diamond) c).getPoints());
+                    gsm.addScore(((Diamond) c).getPoints());
                 } else if (c instanceof HealthPotion) {
                     player.heal();
+                } else if (c instanceof TreasureChest) {
+                    gsm.addScore(((TreasureChest) c).getPoints());
+                    complete = true;
                 }
             }
         }
@@ -157,10 +189,15 @@ public abstract class Level {
                 e.draw(g);
             }
         }
+        if (boss != null && !boss.isDead()) {
+            boss.draw(g);
+        }
         player.draw(g);
 
         g.translate(offsetX, 0);
     }
 
-    public abstract boolean isComplete();
+    public boolean isComplete() {
+        return complete;
+    }
 }
