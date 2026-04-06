@@ -3,6 +3,8 @@ package entities.enemies;
 import entities.Player;
 import rendering.AnimatedSprite;
 import java.awt.Graphics2D;
+import java.awt.Rectangle;
+import java.util.List;
 
 public class PinkStar extends Enemy {
 
@@ -20,11 +22,19 @@ public class PinkStar extends Enemy {
     private AnimatedSprite sprite;
     private AnimatedSprite attackEffect;
 
-    public PinkStar(float x, float y, Player target) {
+    public PinkStar(float x, float y, Player target, List<Rectangle> platforms) {
         super(x, y, 34, 30, 3, 1);
+        this.target = target;
+        // Find the platform this enemy stands on and clamp patrol to its edges
         this.patrolLeft = x - 80;
         this.patrolRight = x + 80;
-        this.target = target;
+        for (Rectangle plat : platforms) {
+            if (x >= plat.x && x <= plat.x + plat.width && y + height >= plat.y - 5 && y + height <= plat.y + 10) {
+                patrolLeft = Math.max(patrolLeft, plat.x);
+                patrolRight = Math.min(patrolRight, plat.x + plat.width - width);
+                break;
+            }
+        }
         initSprite();
     }
 
@@ -102,15 +112,17 @@ public class PinkStar extends Enemy {
         int drawX = (int) x - (drawW - width) / 2;
         int drawY = (int) y + height - drawH + 10;
         drawWithDeathFade(g, () -> sprite.draw(g, drawX, drawY, drawW, drawH));
+        drawHealthBar(g);
+    }
 
-        if (canDealDamage() && !dying) {
+    @Override
+    public void drawEffect(Graphics2D g) {
+        if (canDealDamage()) {
             int effectW = 16 * DRAW_SCALE;
             int effectH = 12 * DRAW_SCALE;
             int effectX = movingRight ? (int) x + width : (int) x - effectW;
             int effectY = (int) y + height / 2 - effectH / 2;
             attackEffect.draw(g, effectX, effectY, effectW, effectH);
         }
-
-        drawHealthBar(g);
     }
 }

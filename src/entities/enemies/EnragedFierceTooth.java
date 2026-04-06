@@ -57,15 +57,17 @@ public class EnragedFierceTooth extends Boss {
             g.setColor(new Color(255, 0, 0, 60));
             g.fillRect(drawX, drawY, drawW, drawH);
         });
+        drawHealthBar(g);
+    }
 
-        if (lunging && !dying) {
+    @Override
+    public void drawEffect(Graphics2D g) {
+        if (lunging) {
             int effectW = 22 * DRAW_SCALE;
             int effectH = 24 * DRAW_SCALE;
             int effectX = facingRight ? (int) x + width : (int) x - effectW;
             int effectY = (int) y + height / 2 - effectH / 2;
             attackEffect.draw(g, effectX, effectY, effectW, effectH);
         }
-
-        drawHealthBar(g);
     }
 }

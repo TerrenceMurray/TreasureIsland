@@ -15,6 +15,7 @@ import engine.GameLoop;
 import engine.GameStateManager;
 import engine.LevelLoader;
 import rendering.ScrollingBackground;
+import rendering.TerrainRenderer;
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
@@ -32,12 +33,15 @@ public abstract class Level {
     protected int levelWidth;
     protected boolean complete;
     protected ScrollingBackground background;
+    protected TerrainRenderer terrain;
 
     public Level(Player player, Camera camera, String levelFile, String bgPath) {
         this.player = player;
         this.camera = camera;
         this.background = new ScrollingBackground(bgPath,
             GameLoop.GAME_WIDTH, GameLoop.GAME_HEIGHT);
+        this.terrain = new TerrainRenderer(
+            "assets/Treasure Hunters/Palm Tree Island/Sprites/Terrain/Terrain (32x32).png");
 
         LevelLoader loader = new LevelLoader(levelFile);
         this.platforms = loader.getPlatforms();
@@ -48,7 +52,7 @@ public abstract class Level {
 
         this.enemies = new ArrayList<>();
         for (float[] pos : loader.getPinkStarSpawns()) {
-            enemies.add(new PinkStar(pos[0], pos[1], player));
+            enemies.add(new PinkStar(pos[0], pos[1], player, platforms));
         }
         for (float[] pos : loader.getCrabbySpawns()) {
             enemies.add(new Crabby(pos[0], pos[1], player));
@@ -99,6 +103,8 @@ public abstract class Level {
     }
 
     private void checkCombat() {
+        if (player.isDying() || player.isDead()) return;
+
         GameStateManager gsm = GameStateManager.getInstance();
         GameConfig cfg = GameConfig.getInstance();
         Rectangle playerBounds = player.getBounds();
@@ -181,10 +187,12 @@ public abstract class Level {
                     onPlatform = true;
                     break;
                 }
-                // Head bump — only when moving upward
-                float platBottom = plat.y + plat.height;
-                if (player.getVelocityY() < 0 && prevY >= platBottom - 2 && player.getY() < platBottom) {
-                    player.hitHead(platBottom);
+                // Head bump — only for thick platforms (ground), thin ones are pass-through
+                if (plat.height > 30) {
+                    float platBottom = plat.y + plat.height;
+                    if (player.getVelocityY() < 0 && prevY >= platBottom - 2 && player.getY() < platBottom) {
+                        player.hitHead(platBottom);
+                    }
                 }
             }
         }
@@ -211,15 +219,13 @@ public abstract class Level {
         int offsetX = (int) camera.getX();
         g.translate(-offsetX, 0);
 
-        g.setColor(new Color(100, 70, 40));
-        for (Rectangle plat : platforms) {
-            g.fillRect(plat.x, plat.y, plat.width, plat.height);
-        }
+        terrain.draw(g, platforms);
         for (Collectible c : collectibles) {
             if (!c.isCollected()) {
                 c.draw(g);
             }
         }
+        // Draw entities
         for (Enemy e : enemies) {
             if (!e.isDead() || e.isDying()) {
                 e.draw(g);
@@ -229,6 +235,16 @@ public abstract class Level {
             boss.draw(g);
         }
         player.draw(g);
+
+        // Effects on top of everything
+        for (Enemy e : enemies) {
+            if (!e.isDead() && !e.isDying()) {
+                e.drawEffect(g);
+            }
+        }
+        if (boss != null && !boss.isDead() && !boss.isDying()) {
+            boss.drawEffect(g);
+        }
 
         g.translate(offsetX, 0);
     }

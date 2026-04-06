@@ -33,7 +33,7 @@ public class Player extends GameEntity implements Attackable {
     private int attackCooldownTimer;
     private Set<Object> hitEnemies = new HashSet<>();
     private int damageCooldown;
-    private static final int DAMAGE_COOLDOWN_MAX = 30;
+    private static final int DAMAGE_COOLDOWN_MAX = 60;
     private int hurtTimer;
     private static final int HURT_DURATION = 12;
     private boolean dying;
@@ -79,12 +79,14 @@ public class Player extends GameEntity implements Attackable {
 
     @Override
     public void update() {
-        if (dying) {
-            deathTimer--;
-            String deathState = deathTimer > DEATH_GROUND_DURATION ? "deadhit" : "dead";
-            sprite.setState(deathState);
-            sprite.update();
-            if (deathTimer <= 0) dying = false;
+        if (health <= 0) {
+            if (dying) {
+                deathTimer--;
+                String deathState = deathTimer > DEATH_GROUND_DURATION ? "deadhit" : "dead";
+                sprite.setState(deathState);
+                sprite.update();
+                if (deathTimer <= 0) dying = false;
+            }
             return;
         }
 
@@ -165,7 +167,7 @@ public class Player extends GameEntity implements Attackable {
         int drawW = 64 * DRAW_SCALE;
         int drawH = 40 * DRAW_SCALE;
         int drawX = (int) x - (drawW - width) / 2;
-        int drawY = (int) y + height - drawH + 20;
+        int drawY = (int) y + height - drawH + 22;
 
         if (dying) {
             float alpha = deathTimer > DEATH_GROUND_DURATION ? 1f : (float) deathTimer / DEATH_GROUND_DURATION;
@@ -186,6 +188,12 @@ public class Player extends GameEntity implements Attackable {
 
         sprite.draw(g, drawX, drawY, drawW, drawH);
 
+        // Debug
+        g.setColor(Color.RED);
+        g.drawRect((int) x, (int) y, width, height);
+        g.setColor(Color.GREEN);
+        g.drawRect(drawX, drawY, drawW, drawH);
+
         if (attacking && attackTick >= 4) {
             int effectW = 28 * DRAW_SCALE;
             int effectH = 17 * DRAW_SCALE;
@@ -197,9 +205,10 @@ public class Player extends GameEntity implements Attackable {
 
     public Rectangle getAttackBounds() {
         if (!attacking) return null;
-        // Active during the swing frame (frame 2 of 3, ticks 6-12)
         if (attackTick < 6 || attackTick > 12) return null;
-        int attackX = facingRight ? (int) x + width - 5 : (int) x - ATTACK_WIDTH + 5;
+        // Position from sprite center, not narrow hitbox edge
+        int spriteCenterX = (int) x + width / 2;
+        int attackX = facingRight ? spriteCenterX + 10 : spriteCenterX - ATTACK_WIDTH - 10;
         int attackY = (int) y + (height - ATTACK_HEIGHT) / 2;
         return new Rectangle(attackX, attackY, ATTACK_WIDTH, ATTACK_HEIGHT);
     }

@@ -116,15 +116,19 @@ public class Crabby extends Enemy {
         int drawX = (int) x - (drawW - width) / 2;
         int drawY = (int) y + height - drawH + 10;
         drawWithDeathFade(g, () -> sprite.draw(g, drawX, drawY, drawW, drawH));
+        drawHealthBar(g);
+    }
 
-        if (charging && !dying) {
+    @Override
+    public void drawEffect(Graphics2D g) {
+        if (charging) {
+            int drawW = 72 * DRAW_SCALE;
+            int drawX = (int) x - (drawW - width) / 2;
+            int drawY = (int) y + height - 32 * DRAW_SCALE + 10;
             int effectW = 118 * DRAW_SCALE;
             int effectH = 24 * DRAW_SCALE;
             int effectX = drawX + (drawW - effectW) / 2;
-            int effectY = drawY;
-            attackEffect.draw(g, effectX, effectY, effectW, effectH);
+            attackEffect.draw(g, effectX, drawY, effectW, effectH);
         }
-
-        drawHealthBar(g);
     }
 }

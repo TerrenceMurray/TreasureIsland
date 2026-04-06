@@ -103,6 +103,8 @@ public abstract class Enemy extends GameEntity implements Attackable {
         g.fillRect(barX, barY, fillW, barH);
     }
 
+    public void drawEffect(Graphics2D g) {}
+
     public int getDamage() { return damage; }
     public boolean canDealDamage() { return true; }
 }
