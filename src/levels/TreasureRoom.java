@@ -8,7 +8,8 @@ import engine.Camera;
 public class TreasureRoom extends Level {
 
     public TreasureRoom(Player player, Camera camera) {
-        super(player, camera, "config/treasure.txt");
+        super(player, camera, "config/treasure.txt",
+            "assets/Treasure Hunters/Palm Tree Island/Sprites/Background/BG Image.png");
         collectibles.add(new TreasureChest(460, 452));
     }
 

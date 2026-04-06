@@ -11,8 +11,10 @@ import entities.enemies.PinkStar;
 import entities.enemies.Crabby;
 import engine.Camera;
 import engine.GameConfig;
+import engine.GameLoop;
 import engine.GameStateManager;
 import engine.LevelLoader;
+import rendering.ScrollingBackground;
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
@@ -29,10 +31,14 @@ public abstract class Level {
     protected Camera camera;
     protected int levelWidth;
     protected boolean complete;
+    protected ScrollingBackground background;
 
-    public Level(Player player, Camera camera, String levelFile) {
+    public Level(Player player, Camera camera, String levelFile, String bgPath) {
         this.player = player;
         this.camera = camera;
+        this.background = new ScrollingBackground(bgPath,
+            GameLoop.GAME_WIDTH, GameLoop.GAME_HEIGHT);
+
         LevelLoader loader = new LevelLoader(levelFile);
         this.platforms = loader.getPlatforms();
         this.collectibles = loader.getCollectibles();
@@ -62,6 +68,7 @@ public abstract class Level {
         float prevY = player.getY();
         player.update();
         applyPlatformCollisions(prevY);
+        updateCollectibles();
         checkCollectiblePickups();
         updateEnemies();
         if (boss != null && !boss.isDead()) {
@@ -69,6 +76,13 @@ public abstract class Level {
         }
         checkCombat();
         camera.update(player);
+        background.update();
+    }
+
+    private void updateCollectibles() {
+        for (Collectible c : collectibles) {
+            if (!c.isCollected()) c.update();
+        }
     }
 
     private void updateEnemies() {
@@ -79,22 +93,30 @@ public abstract class Level {
 
     private void checkCombat() {
         GameStateManager gsm = GameStateManager.getInstance();
+        GameConfig cfg = GameConfig.getInstance();
         Rectangle playerBounds = player.getBounds();
         Rectangle attackBounds = player.getAttackBounds();
 
         for (Enemy e : enemies) {
             if (e.isDead()) continue;
-            if (attackBounds != null && !player.hasAttackHit() && attackBounds.intersects(e.getBounds())) {
+
+            // Player attack hits enemy (once per enemy per swing)
+            if (attackBounds != null && !player.hasHitEnemy(e) && attackBounds.intersects(e.getBounds())) {
                 e.takeDamage(1);
-                player.setAttackHit();
+                player.markEnemyHit(e);
+                // Knockback
+                float knockDir = e.getX() > player.getX() ? 1 : -1;
+                e.knockback(knockDir * 8);
                 if (e.isDead()) {
                     if (e instanceof PinkStar) {
-                        gsm.addScore(GameConfig.getInstance().getInt("score.pinkStar", 75));
+                        gsm.addScore(cfg.getInt("score.pinkStar", 75));
                     } else if (e instanceof Crabby) {
-                        gsm.addScore(GameConfig.getInstance().getInt("score.crabby", 100));
+                        gsm.addScore(cfg.getInt("score.crabby", 100));
                     }
                 }
             }
+
+            // Enemy contact damages player
             if (!e.isDead() && e.canDealDamage() && playerBounds.intersects(e.getBounds())) {
                 player.takeDamage(e.getDamage());
             }
@@ -102,9 +124,11 @@ public abstract class Level {
 
         // Boss combat
         if (boss != null && !boss.isDead()) {
-            if (attackBounds != null && !player.hasAttackHit() && attackBounds.intersects(boss.getBounds())) {
+            if (attackBounds != null && !player.hasHitEnemy(boss) && attackBounds.intersects(boss.getBounds())) {
                 boss.takeDamage(1);
-                player.setAttackHit();
+                player.markEnemyHit(boss);
+                float knockDir = boss.getX() > player.getX() ? 1 : -1;
+                boss.knockback(knockDir * 4);
                 if (boss.isDead()) {
                     onBossDefeated();
                 }
@@ -172,6 +196,9 @@ public abstract class Level {
     }
 
     public void draw(Graphics2D g) {
+        // Background drawn before camera translate (parallax handled internally)
+        background.draw(g, camera.getX(), levelWidth);
+
         int offsetX = (int) camera.getX();
         g.translate(-offsetX, 0);
 

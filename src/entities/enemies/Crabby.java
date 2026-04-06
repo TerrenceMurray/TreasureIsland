@@ -1,10 +1,14 @@
 package entities.enemies;
 
 import entities.Player;
+import rendering.AnimatedSprite;
 import java.awt.Color;
 import java.awt.Graphics2D;
 
 public class Crabby extends Enemy {
+
+    private static final String SPRITE_BASE = "assets/Treasure Hunters/The Crusty Crew/Sprites/Crabby/";
+    private static final int DRAW_SCALE = 2;
 
     private float detectionRange = 100f;
     private float leashRange = 180f;
@@ -15,16 +19,34 @@ public class Crabby extends Enemy {
     private static final int AGGRO_DELAY_MAX = 40;
     private Player target;
     private float spawnX;
+    private boolean facingRight;
+
+    private AnimatedSprite sprite;
 
     public Crabby(float x, float y, Player target) {
         super(x, y, 40, 30, 5, 1);
         this.target = target;
         this.spawnX = x;
+        initSprite();
+    }
+
+    private void initSprite() {
+        sprite = new AnimatedSprite(6);
+        sprite.loadState("idle", SPRITE_BASE + "01-Idle");
+        sprite.loadState("run", SPRITE_BASE + "02-Run");
+        sprite.loadState("hit", SPRITE_BASE + "08-Hit");
+        sprite.loadState("dead", SPRITE_BASE + "10-Dead Ground");
     }
 
     @Override
     public void update() {
         if (isDead()) return;
+        if (hurtTimer > 0) {
+            hurtTimer--;
+            sprite.setState("hit");
+            sprite.update();
+            return;
+        }
 
         float playerDistFromSpawn = Math.abs(target.getX() - spawnX);
         boolean playerAbove = target.getY() + target.getHeight() < y;
@@ -45,23 +67,35 @@ public class Crabby extends Enemy {
         if (charging) {
             float dx = target.getX() - x;
             float dist = Math.abs(dx);
+            facingRight = dx > 0;
             if (dist > width) {
                 x += (dx > 0 ? chargeSpeed : -chargeSpeed);
             }
+            sprite.setState("run");
         } else {
             float toSpawn = spawnX - x;
             if (Math.abs(toSpawn) > idleSpeed) {
+                facingRight = toSpawn > 0;
                 x += (toSpawn > 0 ? idleSpeed : -idleSpeed);
+                sprite.setState("run");
             } else {
                 x = spawnX;
+                sprite.setState("idle");
             }
         }
+
+        sprite.setFlipped(!facingRight);
+        sprite.update();
     }
 
     @Override
     public void draw(Graphics2D g) {
         if (isDead()) return;
-        g.setColor(charging ? Color.RED : Color.ORANGE);
-        g.fillRect((int) x, (int) y, width, height);
+        int drawW = 72 * DRAW_SCALE;
+        int drawH = 32 * DRAW_SCALE;
+        int drawX = (int) x - (drawW - width) / 2;
+        int drawY = (int) y + height - drawH + 10;
+        sprite.draw(g, drawX, drawY, drawW, drawH);
+        drawHealthBar(g);
     }
 }

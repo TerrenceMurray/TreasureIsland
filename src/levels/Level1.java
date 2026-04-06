@@ -10,7 +10,8 @@ import engine.GameStateManager;
 public class Level1 extends Level {
 
     public Level1(Player player, Camera camera) {
-        super(player, camera, "config/level1.txt");
+        super(player, camera, "config/level1.txt",
+            "assets/Treasure Hunters/Palm Tree Island/Sprites/Background/BG Image.png");
     }
 
     @Override

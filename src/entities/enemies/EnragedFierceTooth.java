@@ -1,13 +1,27 @@
 package entities.enemies;
 
 import entities.Player;
+import rendering.AnimatedSprite;
 import java.awt.Color;
 import java.awt.Graphics2D;
 
 public class EnragedFierceTooth extends Boss {
 
+    private static final String SPRITE_BASE = "assets/Treasure Hunters/The Crusty Crew/Sprites/Fierce Tooth/";
+    private static final int DRAW_SCALE = 2;
+
     public EnragedFierceTooth(float x, float y, Player target) {
         super(x, y, 56, 64, 8, 2, 90, target);
+        initSprite();
+    }
+
+    private void initSprite() {
+        sprite = new AnimatedSprite(6);
+        sprite.loadState("idle", SPRITE_BASE + "01-Idle");
+        sprite.loadState("run", SPRITE_BASE + "02-Run");
+        sprite.loadState("attack", SPRITE_BASE + "07-Attack");
+        sprite.loadState("hit", SPRITE_BASE + "08-Hit");
+        sprite.loadState("dead", SPRITE_BASE + "10-Dead Ground");
     }
 
     @Override
@@ -18,14 +32,14 @@ public class EnragedFierceTooth extends Boss {
     @Override
     public void draw(Graphics2D g) {
         if (isDead()) return;
-        g.setColor(lunging ? new Color(255, 50, 50) : new Color(150, 0, 0));
-        g.fillRect((int) x, (int) y, width, height);
+        int drawW = 34 * DRAW_SCALE;
+        int drawH = 30 * DRAW_SCALE;
+        int drawX = (int) x - (drawW - width) / 2;
+        int drawY = (int) y + height - drawH + 10;
 
-        // Health bar
-        g.setColor(Color.RED);
-        int barWidth = (int) (width * ((float) health / 8));
-        g.fillRect((int) x, (int) y - 8, barWidth, 4);
-        g.setColor(Color.DARK_GRAY);
-        g.drawRect((int) x, (int) y - 8, width, 4);
+        sprite.draw(g, drawX, drawY, drawW, drawH);
+        g.setColor(new Color(255, 0, 0, 60));
+        g.fillRect(drawX, drawY, drawW, drawH);
+        drawHealthBar(g);
     }
 }
