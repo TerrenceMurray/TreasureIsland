@@ -20,6 +20,8 @@ public abstract class Enemy extends GameEntity implements Attackable {
     protected static final int DEATH_TOTAL = DEATH_HIT_DURATION + DEATH_GROUND_DURATION;
     protected boolean dying;
     protected float knockbackVel;
+    protected boolean inAir = true;
+    protected static final float GRAVITY = 0.5f;
 
     public Enemy(float x, float y, int width, int height, int health, int damage) {
         super(x, y, width, height);
@@ -69,6 +71,23 @@ public abstract class Enemy extends GameEntity implements Attackable {
     public void knockback(float amount) {
         knockbackVel = amount;
     }
+
+    public void applyGravity() {
+        velocityY += GRAVITY;
+        y += velocityY;
+    }
+
+    public void landOn(float floorY) {
+        y = floorY - height;
+        velocityY = 0;
+        inAir = false;
+    }
+
+    public void setInAir(boolean inAir) {
+        this.inAir = inAir;
+    }
+
+    public boolean isInAir() { return inAir; }
 
     protected void applyKnockback() {
         if (knockbackVel != 0) {

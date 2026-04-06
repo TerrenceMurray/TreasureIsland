@@ -2,17 +2,20 @@ package entities.enemies;
 
 import entities.Player;
 import rendering.AnimatedSprite;
+import java.awt.AlphaComposite;
 import java.awt.Color;
+import java.awt.Composite;
 import java.awt.Graphics2D;
+import java.awt.image.BufferedImage;
 
 public class EnragedFierceTooth extends Boss {
 
     private static final String SPRITE_BASE = "assets/Treasure Hunters/The Crusty Crew/Sprites/Fierce Tooth/";
-    private static final int DRAW_SCALE = 2;
+    private static final int DRAW_SCALE = 3;
     private AnimatedSprite attackEffect;
 
     public EnragedFierceTooth(float x, float y, Player target) {
-        super(x, y, 56, 64, 8, 2, 90, target);
+        super(x, y, 70, 80, 6, 2, 90, target);
         initSprite();
     }
 
@@ -53,9 +56,18 @@ public class EnragedFierceTooth extends Boss {
         int drawY = (int) y + height - drawH + 10;
 
         drawWithDeathFade(g, () -> {
-            sprite.draw(g, drawX, drawY, drawW, drawH);
-            g.setColor(new Color(255, 0, 0, 60));
-            g.fillRect(drawX, drawY, drawW, drawH);
+            // Draw sprite to temp buffer, then tint non-transparent pixels
+            BufferedImage temp = new BufferedImage(drawW, drawH, BufferedImage.TYPE_INT_ARGB);
+            Graphics2D tg = temp.createGraphics();
+            sprite.draw(tg, 0, 0, drawW, drawH);
+
+            // Overlay red only where sprite has pixels
+            tg.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_ATOP, 0.3f));
+            tg.setColor(new Color(255, 0, 0));
+            tg.fillRect(0, 0, drawW, drawH);
+            tg.dispose();
+
+            g.drawImage(temp, drawX, drawY, null);
         });
         drawHealthBar(g);
     }

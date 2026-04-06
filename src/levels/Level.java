@@ -126,6 +126,8 @@ public abstract class Level {
         checkCollectiblePickups();
         updateEnemies();
         if (boss != null && !boss.isDead()) {
+            boss.applyGravity();
+            applyEnemyPlatformCollision(boss);
             boss.update();
         }
         checkCombat();
@@ -143,7 +145,42 @@ public abstract class Level {
 
     private void updateEnemies() {
         for (Enemy e : enemies) {
-            if (!e.isDead() || e.isDying()) e.update();
+            if (!e.isDead() || e.isDying()) {
+                e.applyGravity();
+                applyEnemyPlatformCollision(e);
+                e.update();
+            }
+        }
+    }
+
+    private void applyEnemyPlatformCollision(Enemy e) {
+        java.awt.Rectangle eBounds = e.getBounds();
+        float eBottom = e.getY() + e.getHeight();
+        boolean onPlatform = false;
+
+        for (java.awt.Rectangle plat : platforms) {
+            if (eBounds.intersects(plat)) {
+                if (e.getVelocityY() >= 0 && eBottom >= plat.y && eBottom <= plat.y + 12) {
+                    e.landOn(plat.y);
+                    onPlatform = true;
+                    break;
+                }
+            }
+        }
+
+        if (!onPlatform && !e.isInAir()) {
+            java.awt.Rectangle feet = new java.awt.Rectangle(
+                (int) e.getX(), (int) e.getY() + e.getHeight(), e.getWidth(), 4);
+            boolean supported = false;
+            for (java.awt.Rectangle plat : platforms) {
+                if (feet.intersects(plat)) {
+                    supported = true;
+                    break;
+                }
+            }
+            if (!supported) {
+                e.setInAir(true);
+            }
         }
     }
 

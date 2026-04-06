@@ -14,6 +14,9 @@ public abstract class Boss extends Enemy {
     protected static final int LUNGE_DURATION = 20;
     protected boolean facingRight;
     protected AnimatedSprite sprite;
+    private int jumpCooldown;
+    private static final int JUMP_COOLDOWN_MAX = 90;
+    private static final float JUMP_FORCE = -9f;
 
     public Boss(float x, float y, int width, int height, int health, int damage, int attackInterval, Player target) {
         super(x, y, width, height, health, damage);
@@ -39,9 +42,10 @@ public abstract class Boss extends Enemy {
             return;
         }
 
+        if (jumpCooldown > 0) jumpCooldown--;
+
         if (lunging) {
             lungeTick++;
-            // Lunge forward during attack
             float lungeSpeed = facingRight ? 3f : -3f;
             if (lungeTick < LUNGE_DURATION / 2) {
                 x += lungeSpeed;
@@ -56,19 +60,27 @@ public abstract class Boss extends Enemy {
         }
 
         float dx = target.getX() - x;
+        float dy = target.getY() - y;
         float dist = Math.abs(dx);
         float walkSpeed = getWalkSpeed();
         facingRight = dx > 0;
 
+        // Jump toward player if they're on a higher platform
+        if (dy < -60 && !inAir && jumpCooldown <= 0) {
+            velocityY = JUMP_FORCE;
+            inAir = true;
+            jumpCooldown = JUMP_COOLDOWN_MAX;
+        }
+
         if (dist > this.width) {
             x += (dx > 0 ? walkSpeed : -walkSpeed);
-            sprite.setState("run");
+            sprite.setState(inAir ? "run" : "run");
         } else {
             sprite.setState("idle");
         }
 
         attackTimer++;
-        if (attackTimer >= attackInterval && dist < this.width * 4) {
+        if (attackTimer >= attackInterval && dist < this.width * 2 && !inAir) {
             lunging = true;
             lungeTick = 0;
             attackTimer = 0;
@@ -81,7 +93,7 @@ public abstract class Boss extends Enemy {
     @Override
     public Rectangle getBounds() {
         if (lunging) {
-            int attackReach = width;
+            int attackReach = width / 2;
             int bx = facingRight ? (int) x : (int) x - attackReach;
             return new Rectangle(bx, (int) y, width + attackReach, height);
         }
