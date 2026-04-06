@@ -31,7 +31,7 @@ public class EffectManager {
         AnimatedSprite s = new AnimatedSprite(4);
         s.loadState("play", DUST_BASE);
         s.setState("play");
-        effects.add(new Effect(x - 26, y - 20, s, 104, 40, 20));
+        effects.add(new Effect(x - 13, y - 10, s, 52, 20, 20));
     }
 
     public void spawnScorePopup(float x, float y, int points) {

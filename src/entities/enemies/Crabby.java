@@ -29,6 +29,8 @@ public class Crabby extends Enemy {
 
     private AnimatedSprite sprite;
     private AnimatedSprite attackEffect;
+    private AnimatedSprite exclamation;
+    private static final String DIALOGUE_BASE = "assets/Treasure Hunters/The Crusty Crew/Sprites/Dialogue/Exclamation/";
 
     public Crabby(float x, float y, Player target) {
         super(x, y, 40, 30, 5, 1);
@@ -48,6 +50,9 @@ public class Crabby extends Enemy {
 
         attackEffect = new AnimatedSprite(6);
         attackEffect.loadState("effect", SPRITE_BASE + "11-Attack Effect");
+
+        exclamation = new AnimatedSprite(6);
+        exclamation.loadState("show", DIALOGUE_BASE);
     }
 
     @Override
@@ -76,6 +81,8 @@ public class Crabby extends Enemy {
                 facingRight = target.getX() > x;
                 sprite.setState("anticipation");
                 sprite.setFlipped(facingRight);
+                exclamation.setState("show");
+                exclamation.update();
             } else {
                 charging = true;
             }
@@ -146,7 +153,27 @@ public class Crabby extends Enemy {
         int drawX = (int) x - (drawW - width) / 2;
         int drawY = (int) y + height - drawH + 10;
         drawWithDeathFade(g, () -> sprite.draw(g, drawX, drawY, drawW, drawH));
-        drawHealthBar(g);
+
+        // Health bar above sprite
+        if (health < maxHealth && !dying) {
+            int barW = width;
+            int barH = 4;
+            int barX = (int) x;
+            int barY = drawY - 6;
+            g.setColor(java.awt.Color.DARK_GRAY);
+            g.fillRect(barX, barY, barW, barH);
+            g.setColor(java.awt.Color.RED);
+            g.fillRect(barX, barY, (int)(barW * ((float) health / maxHealth)), barH);
+        }
+
+        // Exclamation during aggro windup
+        if (aggroDelay > 0 && !charging && !dying) {
+            int exW = (int)(14 * 1.75f);
+            int exH = (int)(12 * 1.75f);
+            int exX = facingRight ? (int) x + width + 2 : (int) x - exW - 2;
+            int exY = (int) y - exH;
+            exclamation.draw(g, exX, exY, exW, exH);
+        }
     }
 
     @Override

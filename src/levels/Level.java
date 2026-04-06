@@ -18,6 +18,7 @@ import rendering.ScrollingBackground;
 import rendering.TerrainRenderer;
 import rendering.EffectManager;
 import rendering.PalmTreeRenderer;
+import rendering.DecorRenderer;
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.Graphics2D;
@@ -42,6 +43,7 @@ public abstract class Level {
     protected TerrainRenderer terrain;
     protected EffectManager effects;
     protected PalmTreeRenderer palmTrees;
+    protected DecorRenderer decor;
     protected String levelName;
     protected int levelNameTimer;
     private static final int LEVEL_NAME_DURATION = 120;
@@ -57,6 +59,7 @@ public abstract class Level {
             "assets/Treasure Hunters/Palm Tree Island/Sprites/Terrain/Terrain (32x32).png");
         this.effects = new EffectManager();
         this.palmTrees = new PalmTreeRenderer();
+        this.decor = new DecorRenderer();
 
         LevelLoader loader = new LevelLoader(levelFile);
         this.platforms = loader.getPlatforms();
@@ -129,6 +132,7 @@ public abstract class Level {
         camera.update(player);
         background.update();
         effects.update();
+        decor.update();
     }
 
     private void updateCollectibles() {
@@ -152,7 +156,7 @@ public abstract class Level {
         Rectangle attackBounds = player.getAttackBounds();
 
         for (Enemy e : enemies) {
-            if (e.isDead()) continue;
+            if (e.isDead() || e.isDying()) continue;
 
             if (attackBounds != null && !player.hasHitEnemy(e) && attackBounds.intersects(e.getBounds())) {
                 e.takeDamage(1);
@@ -180,7 +184,7 @@ public abstract class Level {
             }
         }
 
-        if (boss != null && !boss.isDead()) {
+        if (boss != null && !boss.isDead() && !boss.isDying()) {
             if (attackBounds != null && !player.hasHitEnemy(boss) && attackBounds.intersects(boss.getBounds())) {
                 boss.takeDamage(1);
                 player.markEnemyHit(boss);
@@ -276,6 +280,7 @@ public abstract class Level {
         palmTrees.drawBack(g, levelWidth);
 
         terrain.draw(g, platforms);
+        decor.draw(g);
         for (Collectible c : collectibles) {
             if (!c.isCollected()) {
                 c.draw(g);

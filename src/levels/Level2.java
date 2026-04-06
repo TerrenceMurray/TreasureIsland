@@ -14,13 +14,24 @@ public class Level2 extends Level {
             "assets/Treasure Hunters/Palm Tree Island/Sprites/Background/BG Image.png",
             "Palm Tree Island");
 
-        // Back trees — faded, behind ground level
+        // Back trees: 0-3 = regular (on ground), 4-5 = left lean, 6-7 = right lean
         palmTrees.setBackPlacements(new int[][] {
-            {300, 480, 0},
-            {900, 480, 3},
-            {1600, 480, 1},
-            {2400, 480, 4},
-            {3500, 480, 2},
+            // Regular — on ground between platforms
+            {80, 480, 0},
+            {400, 480, 1},
+            {900, 480, 2},
+            {1400, 480, 3},
+            {1850, 480, 0},
+            {2450, 480, 1},
+            {3600, 480, 2},
+            // Right-leaning — on left edges (leans outward right)
+            {960, 448, 6},
+            {1984, 384, 7},
+            {3008, 384, 6},
+            // Left-leaning — on right edges (leans outward left)
+            {224, 448, 4},
+            {1312, 448, 5},
+            {2272, 384, 4},
         });
 
         // Front trees — 2x scale, 2-3 segments
@@ -32,6 +43,7 @@ public class Level2 extends Level {
             {2500, 480, 2, 0},
             {3600, 480, 3, 1},
         });
+
     }
 
     @Override

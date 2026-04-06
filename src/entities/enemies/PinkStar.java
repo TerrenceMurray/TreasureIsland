@@ -9,23 +9,25 @@ import java.util.List;
 public class PinkStar extends Enemy {
 
     private static final String SPRITE_BASE = "assets/Treasure Hunters/The Crusty Crew/Sprites/Pink Star/";
+    private static final String DIALOGUE_BASE = "assets/Treasure Hunters/The Crusty Crew/Sprites/Dialogue/Exclamation/";
     private static final int DRAW_SCALE = 2;
 
-    private float patrolSpeed = 0.8f;
+    private float patrolSpeed = 0.6f;
     private float patrolLeft;
     private float patrolRight;
     private boolean movingRight = true;
     private Player target;
     private int attackDelay;
     private static final int ATTACK_DELAY_MAX = 30;
+    private int attackEffectTimer;
 
     private AnimatedSprite sprite;
     private AnimatedSprite attackEffect;
+    private AnimatedSprite exclamation;
 
     public PinkStar(float x, float y, Player target, List<Rectangle> platforms) {
         super(x, y, 34, 30, 3, 1);
         this.target = target;
-        // Find the platform this enemy stands on and clamp patrol to its edges
         this.patrolLeft = x - 80;
         this.patrolRight = x + 80;
         for (Rectangle plat : platforms) {
@@ -49,6 +51,9 @@ public class PinkStar extends Enemy {
 
         attackEffect = new AnimatedSprite(6);
         attackEffect.loadState("effect", SPRITE_BASE + "11-Attack Effect");
+
+        exclamation = new AnimatedSprite(6);
+        exclamation.loadState("show", DIALOGUE_BASE);
     }
 
     @Override
@@ -71,17 +76,18 @@ public class PinkStar extends Enemy {
         float dx = Math.abs(target.getX() - x);
         boolean playerAbove = target.getY() + target.getHeight() < y;
 
-        if (dx < width && !playerAbove) {
+        if (dx < width + 20 && !playerAbove) {
             movingRight = target.getX() > x;
-            if (attackDelay < ATTACK_DELAY_MAX) attackDelay++;
-            sprite.setState(attackDelay > ATTACK_DELAY_MAX / 2 ? "anticipation" : "idle");
+            if (attackDelay < ATTACK_DELAY_MAX) {
+                attackDelay++;
+                sprite.setState(attackDelay > ATTACK_DELAY_MAX / 2 ? "anticipation" : "idle");
+                exclamation.setState("show");
+                exclamation.update();
+            } else {
+                sprite.setState("idle");
+            }
             sprite.setFlipped(movingRight);
             sprite.update();
-            if (canDealDamage()) {
-                attackEffect.setState("effect");
-                attackEffect.setFlipped(movingRight);
-                attackEffect.update();
-            }
             return;
         }
 
@@ -101,7 +107,27 @@ public class PinkStar extends Enemy {
     }
 
     @Override
+    public Rectangle getBounds() {
+        if (canDealDamage()) {
+            // Extend hitbox forward when attacking
+            int reach = width;
+            int bx = movingRight ? (int) x : (int) x - reach;
+            return new Rectangle(bx, (int) y, width + reach, height);
+        }
+        return super.getBounds();
+    }
+
+    @Override
     public boolean canDealDamage() {
+        if (attackDelay >= ATTACK_DELAY_MAX && attackEffectTimer == 0) {
+            attackEffectTimer = 18;
+            attackEffect.setState("effect");
+            attackEffect.setFlipped(movingRight);
+        }
+        if (attackEffectTimer > 0) {
+            attackEffectTimer--;
+            attackEffect.update();
+        }
         return attackDelay >= ATTACK_DELAY_MAX;
     }
 
@@ -111,14 +137,23 @@ public class PinkStar extends Enemy {
         int drawW = 34 * DRAW_SCALE;
         int drawH = 30 * DRAW_SCALE;
         int drawX = (int) x - (drawW - width) / 2;
-        int drawY = (int) y + height - drawH + 10;
+        int drawY = (int) y + height - drawH + 4;
         drawWithDeathFade(g, () -> sprite.draw(g, drawX, drawY, drawW, drawH));
         drawHealthBar(g);
+
+        // Exclamation above head during anticipation
+        if (attackDelay > 0 && attackDelay < ATTACK_DELAY_MAX && !dying) {
+            int exW = (int)(14 * 1.75f);
+            int exH = (int)(12 * 1.75f);
+            int exX = movingRight ? (int) x + width + 2 : (int) x - exW - 2;
+            int exY = (int) y - exH;
+            exclamation.draw(g, exX, exY, exW, exH);
+        }
     }
 
     @Override
     public void drawEffect(Graphics2D g) {
-        if (canDealDamage()) {
+        if (attackEffectTimer > 0) {
             int effectW = 16 * DRAW_SCALE;
             int effectH = 12 * DRAW_SCALE;
             int effectX = movingRight ? (int) x + width : (int) x - effectW;

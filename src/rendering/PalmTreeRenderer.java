@@ -1,8 +1,6 @@
 package rendering;
 
 import javax.imageio.ImageIO;
-import java.awt.AlphaComposite;
-import java.awt.Composite;
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 import java.io.File;
@@ -18,20 +16,20 @@ public class PalmTreeRenderer {
     private BufferedImage[] backTrees;
     private BufferedImage[] frontTops;
     private BufferedImage trunkStraight;
-    private BufferedImage trunkCurveLeft;
-    private BufferedImage trunkBase;
+    private BufferedImage trunkCurve;
 
-    // Tree placement: x position, ground y, trunk height (in segments), type (0=straight, 1=left lean, 2=right lean)
     private int[][] backTreePlacements;
     private int[][] frontTreePlacements;
 
     public PalmTreeRenderer() {
         backTrees = new BufferedImage[] {
             loadImage(BACK_BASE + "Back Palm Tree Regular 01.png"),
-            loadImage(BACK_BASE + "Back Palm Tree Left 01.png"),
-            loadImage(BACK_BASE + "Back Palm Tree Right 01.png"),
             loadImage(BACK_BASE + "Back Palm Tree Regular 02.png"),
+            loadImage(BACK_BASE + "Back Palm Tree Regular 03.png"),
+            loadImage(BACK_BASE + "Back Palm Tree Regular 04.png"),
+            loadImage(BACK_BASE + "Back Palm Tree Left 01.png"),
             loadImage(BACK_BASE + "Back Palm Tree Left 02.png"),
+            loadImage(BACK_BASE + "Back Palm Tree Right 01.png"),
             loadImage(BACK_BASE + "Back Palm Tree Right 02.png"),
         };
         frontTops = new BufferedImage[] {
@@ -41,12 +39,10 @@ public class PalmTreeRenderer {
             loadImage(FRONT_BASE + "Front Palm Tree Top 04.png"),
         };
 
-        // Extract trunk tiles from the tileset
         BufferedImage trunkSheet = loadImage(FRONT_BASE + "Front Palm Bottom and Grass (32x32).png");
         if (trunkSheet != null) {
             trunkStraight = trunkSheet.getSubimage(0, 0, TILE, TILE);
-            trunkCurveLeft = trunkSheet.getSubimage(TILE, 0, TILE, TILE);
-            trunkBase = trunkStraight;
+            trunkCurve = trunkSheet.getSubimage(TILE, 0, TILE, TILE);
         }
     }
 
@@ -69,8 +65,6 @@ public class PalmTreeRenderer {
 
     public void drawBack(Graphics2D g, int levelWidth) {
         if (backTreePlacements == null) return;
-        Composite original = g.getComposite();
-        g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.5f));
 
         for (int[] tree : backTreePlacements) {
             int tx = tree[0];
@@ -80,12 +74,11 @@ public class PalmTreeRenderer {
             if (img == null) continue;
             int w = img.getWidth() * SCALE;
             int h = img.getHeight() * SCALE;
-            g.drawImage(img, tx, groundY - h, w, h, null);
+            g.drawImage(img, tx, groundY - h + 16, w, h, null);
         }
-
-        g.setComposite(original);
     }
 
+    // Front tree placements: {x, groundY, trunkSegments, topVariant}
     public void drawFront(Graphics2D g, int levelWidth) {
         if (frontTreePlacements == null) return;
 
@@ -97,22 +90,22 @@ public class PalmTreeRenderer {
 
             int segH = TILE * SCALE;
             int segW = TILE * SCALE;
+            int baseOffset = 16;
 
-            // Draw trunk from ground up — base sits on ground
             for (int s = 0; s < trunkSegments; s++) {
-                BufferedImage seg = (s == 0) ? trunkBase : trunkStraight;
+                BufferedImage seg = trunkStraight;
                 if (seg == null) continue;
-                int sy = groundY - (s + 1) * segH;
+                int sy = groundY - (s + 1) * segH + baseOffset;
                 g.drawImage(seg, tx, sy, segW, segH, null);
             }
 
-            // Canopy on top of trunk
+            // Canopy on top
             BufferedImage top = frontTops[topVariant];
             if (top != null) {
                 int topW = top.getWidth() * SCALE;
                 int topH = top.getHeight() * SCALE;
                 int topX = tx + segW / 2 - topW / 2;
-                int topY = groundY - trunkSegments * segH - topH + 8;
+                int topY = groundY - trunkSegments * segH - topH + baseOffset + 8;
                 g.drawImage(top, topX, topY, topW, topH, null);
             }
         }
