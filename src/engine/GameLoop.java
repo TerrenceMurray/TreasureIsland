@@ -138,12 +138,17 @@ public class GameLoop extends JPanel implements Runnable, KeyListener {
 
         if (state.equals("MENU")) {
             drawMenu(g2);
-        } else if (state.equals("PLAYING") || state.equals("LEVEL_COMPLETE")) {
+        } else if (state.equals("PLAYING") || state.equals("LEVEL_COMPLETE") || state.equals("PAUSED")) {
             currentLevel.draw(g2);
             drawHUD(g2);
 
             if (state.equals("LEVEL_COMPLETE")) {
                 drawCenteredText(g2, "Level Complete!", 48, Color.YELLOW, GAME_HEIGHT / 2 - 20);
+            } else if (state.equals("PAUSED")) {
+                g2.setColor(new Color(0, 0, 0, 120));
+                g2.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+                drawCenteredText(g2, "Paused", 48, Color.WHITE, GAME_HEIGHT / 2 - 10);
+                drawCenteredText(g2, "Press P to Resume", 18, Color.GRAY, GAME_HEIGHT / 2 + 30);
             }
         } else if (state.equals("GAME_OVER")) {
             drawEndScreen(g2, "Game Over");
@@ -167,13 +172,40 @@ public class GameLoop extends JPanel implements Runnable, KeyListener {
     }
 
     private void drawHUD(Graphics2D g) {
+        // Hearts
         for (int i = 0; i < player.getMaxHealth(); i++) {
             g.setColor(i < player.getHealth() ? Color.RED : Color.DARK_GRAY);
             g.fillOval(10 + i * 30, 10, 20, 20);
         }
+
+        // Score
         g.setColor(Color.WHITE);
-        g.setFont(g.getFont().deriveFont(18f));
-        g.drawString("Score: " + GameStateManager.getInstance().getScore(), GAME_WIDTH - 140, 28);
+        g.setFont(new Font("Arial", Font.PLAIN, 14));
+        g.drawString("Score: " + GameStateManager.getInstance().getScore(), GAME_WIDTH - 140, 20);
+
+        // Controls (top-right)
+        g.setColor(new Color(255, 255, 255, 180));
+        g.setFont(new Font("Arial", Font.PLAIN, 12));
+        int cx = GAME_WIDTH - 140;
+        g.drawString("A/D  Move", cx, 45);
+        g.drawString("W/Space  Jump", cx, 60);
+        g.drawString("Shift  Attack", cx, 75);
+        g.drawString("P  Pause", cx, 90);
+
+        // Pause/Play button (bottom-left)
+        String state = GameStateManager.getInstance().getState();
+        int bx = 15, by = GAME_HEIGHT - 35;
+        g.setColor(new Color(255, 255, 255, 160));
+        if (state.equals("PAUSED")) {
+            // Play triangle
+            int[] xp = {bx, bx, bx + 16};
+            int[] yp = {by, by + 20, by + 10};
+            g.fillPolygon(xp, yp, 3);
+        } else {
+            // Pause bars
+            g.fillRect(bx, by, 6, 20);
+            g.fillRect(bx + 10, by, 6, 20);
+        }
     }
 
     private void drawCenteredText(Graphics2D g, String text, int size, Color color, int y) {
@@ -208,6 +240,17 @@ public class GameLoop extends JPanel implements Runnable, KeyListener {
             }
             return;
         }
+
+        if (e.getKeyCode() == KeyEvent.VK_P) {
+            if (state.equals("PLAYING")) {
+                GameStateManager.getInstance().setState("PAUSED");
+            } else if (state.equals("PAUSED")) {
+                GameStateManager.getInstance().setState("PLAYING");
+            }
+            return;
+        }
+
+        if (state.equals("PAUSED")) return;
 
         switch (e.getKeyCode()) {
             case KeyEvent.VK_A:
