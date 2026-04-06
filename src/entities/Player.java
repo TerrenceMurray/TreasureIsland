@@ -36,6 +36,7 @@ public class Player extends GameEntity implements Attackable {
     private static final int DAMAGE_COOLDOWN_MAX = 60;
     private int hurtTimer;
     private static final int HURT_DURATION = 12;
+    private float knockbackVel;
     private boolean dying;
     private int deathTimer;
     private static final int DEATH_HIT_DURATION = 36;
@@ -95,6 +96,12 @@ public class Player extends GameEntity implements Attackable {
         if (left) dx -= speed;
         if (right) dx += speed;
         x += dx;
+
+        if (knockbackVel != 0) {
+            x += knockbackVel;
+            knockbackVel *= 0.8f;
+            if (Math.abs(knockbackVel) < 0.5f) knockbackVel = 0;
+        }
 
         if (right) facingRight = true;
         if (left) facingRight = false;
@@ -188,12 +195,6 @@ public class Player extends GameEntity implements Attackable {
 
         sprite.draw(g, drawX, drawY, drawW, drawH);
 
-        // Debug
-        g.setColor(Color.RED);
-        g.drawRect((int) x, (int) y, width, height);
-        g.setColor(Color.GREEN);
-        g.drawRect(drawX, drawY, drawW, drawH);
-
         if (attacking && attackTick >= 4) {
             int effectW = 28 * DRAW_SCALE;
             int effectH = 17 * DRAW_SCALE;
@@ -219,6 +220,10 @@ public class Player extends GameEntity implements Attackable {
 
     public void markEnemyHit(Object enemy) {
         hitEnemies.add(enemy);
+    }
+
+    public void knockback(float amount) {
+        knockbackVel = amount;
     }
 
     @Override

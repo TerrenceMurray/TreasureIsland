@@ -9,7 +9,8 @@ public class TreasureRoom extends Level {
 
     public TreasureRoom(Player player, Camera camera) {
         super(player, camera, "config/treasure.txt",
-            "assets/Treasure Hunters/Palm Tree Island/Sprites/Background/BG Image.png");
+            "assets/Treasure Hunters/Palm Tree Island/Sprites/Background/BG Image.png",
+            "The Treasure");
         collectibles.add(new TreasureChest(460, 452));
     }
 

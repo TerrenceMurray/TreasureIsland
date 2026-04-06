@@ -11,7 +11,8 @@ public class Level2 extends Level {
 
     public Level2(Player player, Camera camera) {
         super(player, camera, "config/level2.txt",
-            "assets/Treasure Hunters/Palm Tree Island/Sprites/Background/BG Image.png");
+            "assets/Treasure Hunters/Palm Tree Island/Sprites/Background/BG Image.png",
+            "Palm Tree Island");
     }
 
     @Override
@@ -23,6 +24,6 @@ public class Level2 extends Level {
     protected void onBossDefeated() {
         GameStateManager.getInstance().addScore(
             GameConfig.getInstance().getInt("score.enragedFierceTooth", 1000));
-        complete = true;
+        bossDefeated = true;
     }
 }

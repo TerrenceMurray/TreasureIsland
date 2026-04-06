@@ -41,6 +41,7 @@ public class PinkStar extends Enemy {
     private void initSprite() {
         sprite = new AnimatedSprite(6);
         sprite.loadState("idle", SPRITE_BASE + "01-Idle");
+        sprite.loadState("anticipation", SPRITE_BASE + "06-Anticipation");
         sprite.loadState("run", SPRITE_BASE + "02-Run");
         sprite.loadState("hit", SPRITE_BASE + "08-Hit");
         sprite.loadState("deadhit", SPRITE_BASE + "09-Dead Hit");
@@ -73,7 +74,7 @@ public class PinkStar extends Enemy {
         if (dx < width && !playerAbove) {
             movingRight = target.getX() > x;
             if (attackDelay < ATTACK_DELAY_MAX) attackDelay++;
-            sprite.setState("idle");
+            sprite.setState(attackDelay > ATTACK_DELAY_MAX / 2 ? "anticipation" : "idle");
             sprite.setFlipped(movingRight);
             sprite.update();
             if (canDealDamage()) {

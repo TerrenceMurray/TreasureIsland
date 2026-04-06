@@ -11,7 +11,8 @@ public class Level1 extends Level {
 
     public Level1(Player player, Camera camera) {
         super(player, camera, "config/level1.txt",
-            "assets/Treasure Hunters/Palm Tree Island/Sprites/Background/BG Image.png");
+            "assets/Treasure Hunters/Palm Tree Island/Sprites/Background/BG Image.png",
+            "The Pirate Ship");
     }
 
     @Override
@@ -23,6 +24,6 @@ public class Level1 extends Level {
     protected void onBossDefeated() {
         GameStateManager.getInstance().addScore(
             GameConfig.getInstance().getInt("score.fierceTooth", 500));
-        complete = true;
+        bossDefeated = true;
     }
 }

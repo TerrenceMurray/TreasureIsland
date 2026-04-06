@@ -2,6 +2,7 @@ package entities.enemies;
 
 import entities.Player;
 import rendering.AnimatedSprite;
+import java.awt.Rectangle;
 
 public abstract class Boss extends Enemy {
 
@@ -40,6 +41,11 @@ public abstract class Boss extends Enemy {
 
         if (lunging) {
             lungeTick++;
+            // Lunge forward during attack
+            float lungeSpeed = facingRight ? 3f : -3f;
+            if (lungeTick < LUNGE_DURATION / 2) {
+                x += lungeSpeed;
+            }
             if (lungeTick >= LUNGE_DURATION) {
                 lunging = false;
                 lungeTick = 0;
@@ -62,7 +68,7 @@ public abstract class Boss extends Enemy {
         }
 
         attackTimer++;
-        if (attackTimer >= attackInterval && dist < this.width * 2) {
+        if (attackTimer >= attackInterval && dist < this.width * 4) {
             lunging = true;
             lungeTick = 0;
             attackTimer = 0;
@@ -70,6 +76,16 @@ public abstract class Boss extends Enemy {
 
         sprite.setFlipped(facingRight);
         sprite.update();
+    }
+
+    @Override
+    public Rectangle getBounds() {
+        if (lunging) {
+            int attackReach = width;
+            int bx = facingRight ? (int) x : (int) x - attackReach;
+            return new Rectangle(bx, (int) y, width + attackReach, height);
+        }
+        return super.getBounds();
     }
 
     @Override

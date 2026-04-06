@@ -13,8 +13,14 @@ public class Crabby extends Enemy {
     private float detectionRange = 100f;
     private float leashRange = 180f;
     private float idleSpeed = 0.5f;
-    private float chargeSpeed = 1f;
+    private float approachSpeed = 1f;
+    private float lungeSpeed = 6f;
     private boolean charging;
+    private boolean lunging;
+    private int lungeTick;
+    private static final int LUNGE_DURATION = 15;
+    private static final int LUNGE_COOLDOWN = 60;
+    private int lungeCooldownTimer;
     private int aggroDelay;
     private static final int AGGRO_DELAY_MAX = 90;
     private Player target;
@@ -34,6 +40,7 @@ public class Crabby extends Enemy {
     private void initSprite() {
         sprite = new AnimatedSprite(6);
         sprite.loadState("idle", SPRITE_BASE + "01-Idle");
+        sprite.loadState("anticipation", SPRITE_BASE + "06-Anticipation");
         sprite.loadState("run", SPRITE_BASE + "02-Run");
         sprite.loadState("hit", SPRITE_BASE + "08-Hit");
         sprite.loadState("deadhit", SPRITE_BASE + "09-Dead Hit");
@@ -66,6 +73,9 @@ public class Crabby extends Enemy {
         if (!charging && playerDistFromSpawn < detectionRange && !playerAbove) {
             if (aggroDelay < AGGRO_DELAY_MAX) {
                 aggroDelay++;
+                facingRight = target.getX() > x;
+                sprite.setState("anticipation");
+                sprite.setFlipped(facingRight);
             } else {
                 charging = true;
             }
@@ -76,18 +86,38 @@ public class Crabby extends Enemy {
             aggroDelay = 0;
         }
 
+        if (lungeCooldownTimer > 0) lungeCooldownTimer--;
+
         if (charging) {
             float dx = target.getX() - x;
             float dist = Math.abs(dx);
             facingRight = dx > 0;
-            if (dist > width) {
-                x += (dx > 0 ? chargeSpeed : -chargeSpeed);
+
+            if (lunging) {
+                // Lunge in progress
+                lungeTick++;
+                x += (facingRight ? lungeSpeed : -lungeSpeed);
+                sprite.setState("run");
+                attackEffect.setState("effect");
+                attackEffect.setFlipped(facingRight);
+                attackEffect.update();
+                if (lungeTick >= LUNGE_DURATION) {
+                    lunging = false;
+                    lungeCooldownTimer = LUNGE_COOLDOWN;
+                }
+            } else if (dist < width * 2 && lungeCooldownTimer <= 0) {
+                // Close enough — start lunge
+                lunging = true;
+                lungeTick = 0;
+            } else if (dist > width) {
+                // Approach the player
+                x += (dx > 0 ? approachSpeed : -approachSpeed);
+                sprite.setState("run");
+            } else {
+                sprite.setState("idle");
             }
-            sprite.setState("run");
-            attackEffect.setState("effect");
-            attackEffect.setFlipped(facingRight);
-            attackEffect.update();
         } else {
+            lunging = false;
             float toSpawn = spawnX - x;
             if (Math.abs(toSpawn) > idleSpeed) {
                 facingRight = toSpawn > 0;
@@ -105,7 +135,7 @@ public class Crabby extends Enemy {
 
     @Override
     public boolean canDealDamage() {
-        return charging;
+        return lunging;
     }
 
     @Override
@@ -121,7 +151,7 @@ public class Crabby extends Enemy {
 
     @Override
     public void drawEffect(Graphics2D g) {
-        if (charging) {
+        if (lunging) {
             int drawW = 72 * DRAW_SCALE;
             int drawX = (int) x - (drawW - width) / 2;
             int drawY = (int) y + height - 32 * DRAW_SCALE + 10;
