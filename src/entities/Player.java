@@ -264,6 +264,7 @@ public class Player extends GameEntity implements Attackable {
     public void setJumping(boolean jumping) { this.jumping = jumping; }
 
     public int getHealth() { return health; }
+    public void setHealth(int health) { this.health = Math.min(health, MAX_HEALTH); }
     public int getMaxHealth() { return MAX_HEALTH; }
     public boolean isAttacking() { return attacking; }
 }

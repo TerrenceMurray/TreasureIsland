@@ -83,6 +83,9 @@ public abstract class Level {
     }
 
     protected abstract Boss createBoss(float x, float y);
+    protected void onBossAnimationComplete() {
+        complete = true;
+    }
 
     public void update() {
         if (complete) return;
@@ -91,13 +94,13 @@ public abstract class Level {
 
         if (bossDefeated) {
             bossDefeatedTimer++;
-            // Let boss death animation play, then update enemies/effects
             if (boss != null && boss.isDying()) boss.update();
             camera.update(player);
             background.update();
             effects.update();
             if (bossDefeatedTimer >= BOSS_DEFEATED_DELAY) {
-                complete = true;
+                bossDefeated = false;
+                onBossAnimationComplete();
             }
             return;
         }

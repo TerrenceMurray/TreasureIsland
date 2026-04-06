@@ -97,13 +97,8 @@ public class GameLoop extends JPanel implements Runnable, KeyListener {
                 GameStateManager.getInstance().setState("GAME_OVER");
             } else if (currentLevel.isComplete()) {
                 if (levelNumber == 2) {
-                    // Go straight to treasure room, no delay
-                    levelNumber = 3;
                     GameStateManager.getInstance().addScore(
                         CFG.getInt("score.levelComplete2", 500));
-                    player = new Player(100, 400);
-                    currentLevel = new TreasureRoom(player, camera);
-                } else if (levelNumber == 3) {
                     GameStateManager.getInstance().setState("VICTORY");
                 } else {
                     GameStateManager.getInstance().setState("LEVEL_COMPLETE");
@@ -116,7 +111,9 @@ public class GameLoop extends JPanel implements Runnable, KeyListener {
                 levelNumber = 2;
                 GameStateManager.getInstance().addScore(
                     CFG.getInt("score.levelComplete1", 200));
+                int prevHealth = player.getHealth();
                 player = new Player(64, 280);
+                player.setHealth(prevHealth);
                 currentLevel = new Level2(player, camera);
                 GameStateManager.getInstance().setState("PLAYING");
             }
