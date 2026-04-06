@@ -33,9 +33,19 @@ public class Player extends GameEntity implements Attackable {
     private int attackCooldownTimer;
     private Set<Object> hitEnemies = new HashSet<>();
     private int damageCooldown;
-    private static final int DAMAGE_COOLDOWN_MAX = 90;
+    private static final int DAMAGE_COOLDOWN_MAX = 30;
+    private int hurtTimer;
+    private static final int HURT_DURATION = 12;
+    private boolean dying;
+    private int deathTimer;
+    private static final int DEATH_HIT_DURATION = 36;
+    private static final int DEATH_GROUND_DURATION = 60;
+    private static final int DEATH_TOTAL = DEATH_HIT_DURATION + DEATH_GROUND_DURATION;
+    private static final String DEATH_BASE = "assets/Treasure Hunters/Captain Clown Nose/Sprites/Captain Clown Nose/Captain Clown Nose without Sword/";
 
     private AnimatedSprite sprite;
+    private AnimatedSprite attackEffect;
+    private static final String EFFECT_BASE = "assets/Treasure Hunters/Captain Clown Nose/Sprites/Captain Clown Nose/Sword Effects/";
 
     public Player(float x, float y) {
         super(x, y,
@@ -55,6 +65,12 @@ public class Player extends GameEntity implements Attackable {
         sprite.loadState("fall", SPRITE_BASE + "12-Fall Sword");
         sprite.loadState("attack", SPRITE_BASE + "15-Attack 1");
         sprite.loadState("hit", SPRITE_BASE + "14-Hit Sword");
+
+        attackEffect = new AnimatedSprite(6);
+        attackEffect.loadState("slash", EFFECT_BASE + "24-Attack 1");
+
+        sprite.loadState("deadhit", DEATH_BASE + "07-Dead Hit");
+        sprite.loadState("dead", DEATH_BASE + "08-Dead Ground");
     }
 
     public void setLevelWidth(int levelWidth) {
@@ -63,7 +79,15 @@ public class Player extends GameEntity implements Attackable {
 
     @Override
     public void update() {
-        // Movement - slower while attacking
+        if (dying) {
+            deathTimer--;
+            String deathState = deathTimer > DEATH_GROUND_DURATION ? "deadhit" : "dead";
+            sprite.setState(deathState);
+            sprite.update();
+            if (deathTimer <= 0) dying = false;
+            return;
+        }
+
         float dx = 0;
         float speed = attacking ? MOVE_SPEED * 0.3f : MOVE_SPEED;
         if (left) dx -= speed;
@@ -83,6 +107,9 @@ public class Player extends GameEntity implements Attackable {
 
         if (attacking) {
             attackTick++;
+            attackEffect.setState("slash");
+            attackEffect.setFlipped(!facingRight);
+            attackEffect.update();
             if (attackTick >= ATTACK_DURATION) {
                 attacking = false;
                 attackTick = 0;
@@ -93,6 +120,7 @@ public class Player extends GameEntity implements Attackable {
 
         if (attackCooldownTimer > 0) attackCooldownTimer--;
         if (damageCooldown > 0) damageCooldown--;
+        if (hurtTimer > 0) hurtTimer--;
 
         if (x < 0) x = 0;
         if (x + width > levelWidth) x = levelWidth - width;
@@ -104,10 +132,10 @@ public class Player extends GameEntity implements Attackable {
     private void updateAnimation() {
         sprite.setFlipped(!facingRight);
 
-        if (attacking) {
-            sprite.setState("attack");
-        } else if (damageCooldown > DAMAGE_COOLDOWN_MAX - 15) {
+        if (hurtTimer > 0) {
             sprite.setState("hit");
+        } else if (attacking) {
+            sprite.setState("attack");
         } else if (inAir) {
             sprite.setState(velocityY < 0 ? "jump" : "fall");
         } else if (left || right) {
@@ -133,20 +161,44 @@ public class Player extends GameEntity implements Attackable {
 
     @Override
     public void draw(Graphics2D g) {
+        if (isDead() && !dying) return;
         int drawW = 64 * DRAW_SCALE;
         int drawH = 40 * DRAW_SCALE;
         int drawX = (int) x - (drawW - width) / 2;
         int drawY = (int) y + height - drawH + 20;
 
-        if (damageCooldown > 0 && (damageCooldown / 5) % 2 == 0) return;
+        if (dying) {
+            float alpha = deathTimer > DEATH_GROUND_DURATION ? 1f : (float) deathTimer / DEATH_GROUND_DURATION;
+            java.awt.Composite original = g.getComposite();
+            g.setComposite(java.awt.AlphaComposite.getInstance(java.awt.AlphaComposite.SRC_OVER, alpha));
+            sprite.draw(g, drawX, drawY, drawW, drawH);
+            g.setComposite(original);
+            return;
+        }
+
+        if (hurtTimer > 0) {
+            java.awt.Composite original = g.getComposite();
+            g.setComposite(java.awt.AlphaComposite.getInstance(java.awt.AlphaComposite.SRC_OVER, 0.3f));
+            sprite.draw(g, drawX, drawY, drawW, drawH);
+            g.setComposite(original);
+            return;
+        }
 
         sprite.draw(g, drawX, drawY, drawW, drawH);
+
+        if (attacking && attackTick >= 4) {
+            int effectW = 28 * DRAW_SCALE;
+            int effectH = 17 * DRAW_SCALE;
+            int effectX = facingRight ? (int) x + width : (int) x - effectW;
+            int effectY = (int) y + height / 2 - effectH / 2;
+            attackEffect.draw(g, effectX, effectY, effectW, effectH);
+        }
     }
 
     public Rectangle getAttackBounds() {
         if (!attacking) return null;
-        // Only active during middle frames of swing
-        if (attackTick < 4 || attackTick > ATTACK_DURATION - 4) return null;
+        // Active during the swing frame (frame 2 of 3, ticks 6-12)
+        if (attackTick < 6 || attackTick > 12) return null;
         int attackX = facingRight ? (int) x + width - 5 : (int) x - ATTACK_WIDTH + 5;
         int attackY = (int) y + (height - ATTACK_HEIGHT) / 2;
         return new Rectangle(attackX, attackY, ATTACK_WIDTH, ATTACK_HEIGHT);
@@ -162,16 +214,24 @@ public class Player extends GameEntity implements Attackable {
 
     @Override
     public void takeDamage(int amount) {
-        if (damageCooldown > 0) return;
+        if (damageCooldown > 0 || dying) return;
         health -= amount;
         if (health < 0) health = 0;
-        damageCooldown = DAMAGE_COOLDOWN_MAX;
+        if (health == 0) {
+            dying = true;
+            deathTimer = DEATH_TOTAL;
+        } else {
+            damageCooldown = DAMAGE_COOLDOWN_MAX;
+            hurtTimer = HURT_DURATION;
+        }
     }
 
     @Override
     public boolean isDead() {
-        return health <= 0;
+        return health <= 0 && !dying;
     }
+
+    public boolean isDying() { return dying; }
 
     public void heal() {
         if (health < MAX_HEALTH) health++;

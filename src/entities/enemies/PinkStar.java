@@ -2,7 +2,6 @@ package entities.enemies;
 
 import entities.Player;
 import rendering.AnimatedSprite;
-import java.awt.Color;
 import java.awt.Graphics2D;
 
 public class PinkStar extends Enemy {
@@ -10,7 +9,7 @@ public class PinkStar extends Enemy {
     private static final String SPRITE_BASE = "assets/Treasure Hunters/The Crusty Crew/Sprites/Pink Star/";
     private static final int DRAW_SCALE = 2;
 
-    private float patrolSpeed = 1.5f;
+    private float patrolSpeed = 0.8f;
     private float patrolLeft;
     private float patrolRight;
     private boolean movingRight = true;
@@ -19,6 +18,7 @@ public class PinkStar extends Enemy {
     private static final int ATTACK_DELAY_MAX = 30;
 
     private AnimatedSprite sprite;
+    private AnimatedSprite attackEffect;
 
     public PinkStar(float x, float y, Player target) {
         super(x, y, 34, 30, 3, 1);
@@ -33,12 +33,23 @@ public class PinkStar extends Enemy {
         sprite.loadState("idle", SPRITE_BASE + "01-Idle");
         sprite.loadState("run", SPRITE_BASE + "02-Run");
         sprite.loadState("hit", SPRITE_BASE + "08-Hit");
+        sprite.loadState("deadhit", SPRITE_BASE + "09-Dead Hit");
         sprite.loadState("dead", SPRITE_BASE + "10-Dead Ground");
+
+        attackEffect = new AnimatedSprite(6);
+        attackEffect.loadState("effect", SPRITE_BASE + "11-Attack Effect");
     }
 
     @Override
     public void update() {
+        if (dying) {
+            sprite.setState(inDeathHitPhase() ? "deadhit" : "dead");
+            sprite.update();
+            updateDeath();
+            return;
+        }
         if (isDead()) return;
+        applyKnockback();
         if (hurtTimer > 0) {
             hurtTimer--;
             sprite.setState("hit");
@@ -53,8 +64,13 @@ public class PinkStar extends Enemy {
             movingRight = target.getX() > x;
             if (attackDelay < ATTACK_DELAY_MAX) attackDelay++;
             sprite.setState("idle");
-            sprite.setFlipped(!movingRight);
+            sprite.setFlipped(movingRight);
             sprite.update();
+            if (canDealDamage()) {
+                attackEffect.setState("effect");
+                attackEffect.setFlipped(movingRight);
+                attackEffect.update();
+            }
             return;
         }
 
@@ -69,7 +85,7 @@ public class PinkStar extends Enemy {
         }
 
         sprite.setState("run");
-        sprite.setFlipped(!movingRight);
+        sprite.setFlipped(movingRight);
         sprite.update();
     }
 
@@ -80,12 +96,21 @@ public class PinkStar extends Enemy {
 
     @Override
     public void draw(Graphics2D g) {
-        if (isDead()) return;
+        if (isDead() && !dying) return;
         int drawW = 34 * DRAW_SCALE;
         int drawH = 30 * DRAW_SCALE;
         int drawX = (int) x - (drawW - width) / 2;
         int drawY = (int) y + height - drawH + 10;
-        sprite.draw(g, drawX, drawY, drawW, drawH);
+        drawWithDeathFade(g, () -> sprite.draw(g, drawX, drawY, drawW, drawH));
+
+        if (canDealDamage() && !dying) {
+            int effectW = 16 * DRAW_SCALE;
+            int effectH = 12 * DRAW_SCALE;
+            int effectX = movingRight ? (int) x + width : (int) x - effectW;
+            int effectY = (int) y + height / 2 - effectH / 2;
+            attackEffect.draw(g, effectX, effectY, effectW, effectH);
+        }
+
         drawHealthBar(g);
     }
 }

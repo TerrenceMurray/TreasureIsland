@@ -67,6 +67,13 @@ public abstract class Level {
 
         float prevY = player.getY();
         player.update();
+
+        if (player.isDying()) {
+            camera.update(player);
+            background.update();
+            return;
+        }
+
         applyPlatformCollisions(prevY);
         updateCollectibles();
         checkCollectiblePickups();
@@ -87,7 +94,7 @@ public abstract class Level {
 
     private void updateEnemies() {
         for (Enemy e : enemies) {
-            if (!e.isDead()) e.update();
+            if (!e.isDead() || e.isDying()) e.update();
         }
     }
 
@@ -106,7 +113,7 @@ public abstract class Level {
                 player.markEnemyHit(e);
                 // Knockback
                 float knockDir = e.getX() > player.getX() ? 1 : -1;
-                e.knockback(knockDir * 8);
+                e.knockback(knockDir * 10);
                 if (e.isDead()) {
                     if (e instanceof PinkStar) {
                         gsm.addScore(cfg.getInt("score.pinkStar", 75));
@@ -128,7 +135,7 @@ public abstract class Level {
                 boss.takeDamage(1);
                 player.markEnemyHit(boss);
                 float knockDir = boss.getX() > player.getX() ? 1 : -1;
-                boss.knockback(knockDir * 4);
+                boss.knockback(knockDir * 5);
                 if (boss.isDead()) {
                     onBossDefeated();
                 }
@@ -168,13 +175,15 @@ public abstract class Level {
 
         for (Rectangle plat : platforms) {
             if (playerBounds.intersects(plat)) {
-                if (prevBottom <= plat.y + 2 && playerBottom >= plat.y) {
+                // Landing — only when falling
+                if (player.getVelocityY() >= 0 && prevBottom <= plat.y + 2 && playerBottom >= plat.y) {
                     player.landOn(plat.y);
                     onPlatform = true;
                     break;
                 }
+                // Head bump — only when moving upward
                 float platBottom = plat.y + plat.height;
-                if (prevY >= platBottom - 2 && player.getY() < platBottom) {
+                if (player.getVelocityY() < 0 && prevY >= platBottom - 2 && player.getY() < platBottom) {
                     player.hitHead(platBottom);
                 }
             }
@@ -212,11 +221,11 @@ public abstract class Level {
             }
         }
         for (Enemy e : enemies) {
-            if (!e.isDead()) {
+            if (!e.isDead() || e.isDying()) {
                 e.draw(g);
             }
         }
-        if (boss != null && !boss.isDead()) {
+        if (boss != null && (!boss.isDead() || boss.isDying())) {
             boss.draw(g);
         }
         player.draw(g);

@@ -22,7 +22,14 @@ public abstract class Boss extends Enemy {
 
     @Override
     public void update() {
+        if (dying) {
+            sprite.setState(inDeathHitPhase() ? "deadhit" : "dead");
+            sprite.update();
+            updateDeath();
+            return;
+        }
         if (isDead()) return;
+        applyKnockback();
 
         if (hurtTimer > 0) {
             hurtTimer--;
@@ -61,7 +68,7 @@ public abstract class Boss extends Enemy {
             attackTimer = 0;
         }
 
-        sprite.setFlipped(!facingRight);
+        sprite.setFlipped(facingRight);
         sprite.update();
     }
 

@@ -13,15 +13,16 @@ public class Crabby extends Enemy {
     private float detectionRange = 100f;
     private float leashRange = 180f;
     private float idleSpeed = 0.5f;
-    private float chargeSpeed = 2f;
+    private float chargeSpeed = 1f;
     private boolean charging;
     private int aggroDelay;
-    private static final int AGGRO_DELAY_MAX = 40;
+    private static final int AGGRO_DELAY_MAX = 90;
     private Player target;
     private float spawnX;
     private boolean facingRight;
 
     private AnimatedSprite sprite;
+    private AnimatedSprite attackEffect;
 
     public Crabby(float x, float y, Player target) {
         super(x, y, 40, 30, 5, 1);
@@ -35,12 +36,23 @@ public class Crabby extends Enemy {
         sprite.loadState("idle", SPRITE_BASE + "01-Idle");
         sprite.loadState("run", SPRITE_BASE + "02-Run");
         sprite.loadState("hit", SPRITE_BASE + "08-Hit");
+        sprite.loadState("deadhit", SPRITE_BASE + "09-Dead Hit");
         sprite.loadState("dead", SPRITE_BASE + "10-Dead Ground");
+
+        attackEffect = new AnimatedSprite(6);
+        attackEffect.loadState("effect", SPRITE_BASE + "11-Attack Effect");
     }
 
     @Override
     public void update() {
+        if (dying) {
+            sprite.setState(inDeathHitPhase() ? "deadhit" : "dead");
+            sprite.update();
+            updateDeath();
+            return;
+        }
         if (isDead()) return;
+        applyKnockback();
         if (hurtTimer > 0) {
             hurtTimer--;
             sprite.setState("hit");
@@ -72,6 +84,9 @@ public class Crabby extends Enemy {
                 x += (dx > 0 ? chargeSpeed : -chargeSpeed);
             }
             sprite.setState("run");
+            attackEffect.setState("effect");
+            attackEffect.setFlipped(facingRight);
+            attackEffect.update();
         } else {
             float toSpawn = spawnX - x;
             if (Math.abs(toSpawn) > idleSpeed) {
@@ -84,18 +99,32 @@ public class Crabby extends Enemy {
             }
         }
 
-        sprite.setFlipped(!facingRight);
+        sprite.setFlipped(facingRight);
         sprite.update();
     }
 
     @Override
+    public boolean canDealDamage() {
+        return charging;
+    }
+
+    @Override
     public void draw(Graphics2D g) {
-        if (isDead()) return;
+        if (isDead() && !dying) return;
         int drawW = 72 * DRAW_SCALE;
         int drawH = 32 * DRAW_SCALE;
         int drawX = (int) x - (drawW - width) / 2;
         int drawY = (int) y + height - drawH + 10;
-        sprite.draw(g, drawX, drawY, drawW, drawH);
+        drawWithDeathFade(g, () -> sprite.draw(g, drawX, drawY, drawW, drawH));
+
+        if (charging && !dying) {
+            int effectW = 118 * DRAW_SCALE;
+            int effectH = 24 * DRAW_SCALE;
+            int effectX = drawX + (drawW - effectW) / 2;
+            int effectY = drawY;
+            attackEffect.draw(g, effectX, effectY, effectW, effectH);
+        }
+
         drawHealthBar(g);
     }
 }

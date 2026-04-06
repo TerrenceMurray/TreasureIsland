@@ -27,4 +27,5 @@ public abstract class GameEntity implements Drawable, Updatable, Collidable {
     public float getY() { return y; }
     public int getWidth() { return width; }
     public int getHeight() { return height; }
+    public float getVelocityY() { return velocityY; }
 }
