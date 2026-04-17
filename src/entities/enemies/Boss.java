@@ -5,7 +5,6 @@ import rendering.AnimatedSprite;
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.Graphics2D;
-import java.awt.Rectangle;
 
 public abstract class Boss extends Enemy {
 
@@ -96,13 +95,13 @@ public abstract class Boss extends Enemy {
     }
 
     @Override
-    public Rectangle getBounds() {
+    public java.awt.geom.Rectangle2D.Double getBoundingRectangle() {
         if (lunging) {
             int attackReach = width / 2;
             int bx = facingRight ? (int) x : (int) x - attackReach;
-            return new Rectangle(bx, (int) y, width + attackReach, height);
+            return new java.awt.geom.Rectangle2D.Double(bx, y, width + attackReach, height);
         }
-        return super.getBounds();
+        return super.getBoundingRectangle();
     }
 
     @Override

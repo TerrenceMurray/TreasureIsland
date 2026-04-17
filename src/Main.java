@@ -1,6 +1,6 @@
 import javax.swing.JFrame;
 import javax.swing.SwingUtilities;
-import engine.GameLoop;
+import engine.GamePanel;
 
 public class Main {
 
@@ -10,13 +10,13 @@ public class Main {
             window.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
             window.setResizable(false);
 
-            GameLoop gameLoop = new GameLoop();
+            GamePanel gameLoop = new GamePanel();
             window.add(gameLoop);
             window.pack();
             window.setLocationRelativeTo(null);
             window.setVisible(true);
 
-            gameLoop.start();
+            gameLoop.startGame();
         });
     }
 }

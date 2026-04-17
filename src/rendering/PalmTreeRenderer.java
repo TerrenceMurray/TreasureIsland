@@ -16,8 +16,6 @@ public class PalmTreeRenderer {
     private BufferedImage[] backTrees;
     private BufferedImage[] frontTops;
     private BufferedImage trunkStraight;
-    private BufferedImage trunkCurve;
-
     private int[][] backTreePlacements;
     private int[][] frontTreePlacements;
 
@@ -42,7 +40,7 @@ public class PalmTreeRenderer {
         BufferedImage trunkSheet = loadImage(FRONT_BASE + "Front Palm Bottom and Grass (32x32).png");
         if (trunkSheet != null) {
             trunkStraight = trunkSheet.getSubimage(0, 0, TILE, TILE);
-            trunkCurve = trunkSheet.getSubimage(TILE, 0, TILE, TILE);
+            trunkSheet.getSubimage(TILE, 0, TILE, TILE);
         }
     }
 

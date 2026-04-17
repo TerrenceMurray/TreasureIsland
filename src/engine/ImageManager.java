@@ -1,42 +1,45 @@
 package engine;
 
 import javax.imageio.ImageIO;
+import javax.swing.ImageIcon;
+import java.awt.Graphics2D;
+import java.awt.Image;
 import java.awt.image.BufferedImage;
+import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
-import java.util.HashMap;
-import java.util.Map;
 
+// Centralizes image loading and processing (Week 3 pattern).
 public class ImageManager {
 
-    private static ImageManager instance;
-    private Map<String, BufferedImage> images;
-
-    private ImageManager() {
-        images = new HashMap<>();
+    public ImageManager() {
     }
 
-    public static ImageManager getInstance() {
-        if (instance == null) {
-            instance = new ImageManager();
+    public static Image loadImage(String fileName) {
+        return new ImageIcon(fileName).getImage();
+    }
+
+    public static BufferedImage loadBufferedImage(String fileName) {
+        BufferedImage bi = null;
+        File file = new File(fileName);
+        try {
+            bi = ImageIO.read(file);
+        } catch (IOException ioe) {
+            System.err.println("Error opening file " + fileName + ": " + ioe);
         }
-        return instance;
+        return bi;
     }
 
-    public void loadImage(String key, String path) {
-        try (InputStream is = getClass().getResourceAsStream(path)) {
-            if (is == null) {
-                System.err.println("Image not found: " + path);
-                return;
-            }
-            images.put(key, ImageIO.read(is));
-        } catch (IOException e) {
-            System.err.println("Failed to load image: " + path);
-            e.printStackTrace();
-        }
-    }
+    // Make a copy of the BufferedImage src.
+    public static BufferedImage copyImage(BufferedImage src) {
+        if (src == null) return null;
 
-    public BufferedImage getImage(String key) {
-        return images.get(key);
+        BufferedImage copy = new BufferedImage(
+            src.getWidth(), src.getHeight(), BufferedImage.TYPE_INT_ARGB);
+
+        Graphics2D g2d = copy.createGraphics();
+        g2d.drawImage(src, 0, 0, null);
+        g2d.dispose();
+
+        return copy;
     }
 }

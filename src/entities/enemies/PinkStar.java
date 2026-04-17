@@ -108,14 +108,14 @@ public class PinkStar extends Enemy {
     }
 
     @Override
-    public Rectangle getBounds() {
+    public java.awt.geom.Rectangle2D.Double getBoundingRectangle() {
         if (canDealDamage()) {
             // Extend hitbox forward when attacking
             int reach = width;
             int bx = movingRight ? (int) x : (int) x - reach;
-            return new Rectangle(bx, (int) y, width + reach, height);
+            return new java.awt.geom.Rectangle2D.Double(bx, y, width + reach, height);
         }
-        return super.getBounds();
+        return super.getBoundingRectangle();
     }
 
     @Override

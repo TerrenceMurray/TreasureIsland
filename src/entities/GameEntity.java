@@ -3,7 +3,7 @@ package entities;
 import interfaces.Drawable;
 import interfaces.Updatable;
 import interfaces.Collidable;
-import java.awt.Rectangle;
+import java.awt.geom.Rectangle2D;
 
 public abstract class GameEntity implements Drawable, Updatable, Collidable {
 
@@ -19,8 +19,8 @@ public abstract class GameEntity implements Drawable, Updatable, Collidable {
     }
 
     @Override
-    public Rectangle getBounds() {
-        return new Rectangle((int) x, (int) y, width, height);
+    public Rectangle2D.Double getBoundingRectangle() {
+        return new Rectangle2D.Double(x, y, width, height);
     }
 
     public float getX() { return x; }

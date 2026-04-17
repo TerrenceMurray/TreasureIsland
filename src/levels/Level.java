@@ -11,7 +11,7 @@ import entities.enemies.PinkStar;
 import entities.enemies.Crabby;
 import engine.Camera;
 import engine.GameConfig;
-import engine.GameLoop;
+import engine.GamePanel;
 import engine.GameStateManager;
 import engine.LevelLoader;
 import rendering.ScrollingBackground;
@@ -55,7 +55,7 @@ public abstract class Level {
         this.levelName = levelName;
         this.levelNameTimer = LEVEL_NAME_DURATION;
         this.background = new ScrollingBackground(bgPath,
-            GameLoop.GAME_WIDTH, GameLoop.GAME_HEIGHT);
+            GamePanel.GAME_WIDTH, GamePanel.GAME_HEIGHT);
         this.terrain = new TerrainRenderer(
             "assets/Treasure Hunters/Palm Tree Island/Sprites/Terrain/Terrain (32x32).png");
         this.effects = new EffectManager();
@@ -158,7 +158,7 @@ public abstract class Level {
     }
 
     private void applyEnemyPlatformCollision(Enemy e) {
-        java.awt.Rectangle eBounds = e.getBounds();
+        java.awt.geom.Rectangle2D.Double eBounds = e.getBoundingRectangle();
         float eBottom = e.getY() + e.getHeight();
         boolean onPlatform = false;
 
@@ -193,13 +193,13 @@ public abstract class Level {
 
         GameStateManager gsm = GameStateManager.getInstance();
         GameConfig cfg = GameConfig.getInstance();
-        Rectangle playerBounds = player.getBounds();
+        java.awt.geom.Rectangle2D.Double playerBounds = player.getBoundingRectangle();
         Rectangle attackBounds = player.getAttackBounds();
 
         for (Enemy e : enemies) {
             if (e.isDead() || e.isDying()) continue;
 
-            if (attackBounds != null && !player.hasHitEnemy(e) && attackBounds.intersects(e.getBounds())) {
+            if (attackBounds != null && !player.hasHitEnemy(e) && attackBounds.intersects(e.getBoundingRectangle())) {
                 e.takeDamage(1);
                 player.markEnemyHit(e);
                 float knockDir = e.getX() > player.getX() ? 1 : -1;
@@ -217,7 +217,7 @@ public abstract class Level {
                 }
             }
 
-            if (!e.isDead() && e.canDealDamage() && playerBounds.intersects(e.getBounds())) {
+            if (!e.isDead() && e.canDealDamage() && playerBounds.intersects(e.getBoundingRectangle())) {
                 player.takeDamage(e.getDamage());
                 float knockDir = player.getX() > e.getX() ? 1 : -1;
                 player.knockback(knockDir * 12);
@@ -226,7 +226,7 @@ public abstract class Level {
         }
 
         if (boss != null && !boss.isDead() && !boss.isDying()) {
-            if (attackBounds != null && !player.hasHitEnemy(boss) && attackBounds.intersects(boss.getBounds())) {
+            if (attackBounds != null && !player.hasHitEnemy(boss) && attackBounds.intersects(boss.getBoundingRectangle())) {
                 boss.takeDamage(1);
                 player.markEnemyHit(boss);
                 float knockDir = boss.getX() > player.getX() ? 1 : -1;
@@ -236,7 +236,7 @@ public abstract class Level {
                     onBossDefeated();
                 }
             }
-            if (!boss.isDead() && boss.canDealDamage() && playerBounds.intersects(boss.getBounds())) {
+            if (!boss.isDead() && boss.canDealDamage() && playerBounds.intersects(boss.getBoundingRectangle())) {
                 player.takeDamage(boss.getDamage());
                 float knockDir = player.getX() > boss.getX() ? 1 : -1;
                 player.knockback(knockDir * 18);
@@ -248,11 +248,11 @@ public abstract class Level {
     protected abstract void onBossDefeated();
 
     private void checkCollectiblePickups() {
-        Rectangle playerBounds = player.getBounds();
+        java.awt.geom.Rectangle2D.Double playerBounds = player.getBoundingRectangle();
         GameStateManager gsm = GameStateManager.getInstance();
         for (Collectible c : collectibles) {
             if (c.isCollected()) continue;
-            if (playerBounds.intersects(c.getBounds())) {
+            if (playerBounds.intersects(c.getBoundingRectangle())) {
                 c.collect();
                 if (c instanceof Diamond) {
                     int pts = ((Diamond) c).getPoints();
@@ -274,7 +274,7 @@ public abstract class Level {
     }
 
     private void applyPlatformCollisions(float prevY) {
-        Rectangle playerBounds = player.getBounds();
+        java.awt.geom.Rectangle2D.Double playerBounds = player.getBoundingRectangle();
         float playerBottom = player.getY() + player.getHeight();
         float prevBottom = prevY + player.getHeight();
         boolean onPlatform = false;
@@ -367,7 +367,7 @@ public abstract class Level {
             g.setColor(Color.WHITE);
             g.setFont(new Font("Arial", Font.BOLD, 36));
             int textW = g.getFontMetrics().stringWidth(levelName);
-            g.drawString(levelName, (GameLoop.GAME_WIDTH - textW) / 2, GameLoop.GAME_HEIGHT / 3);
+            g.drawString(levelName, (GamePanel.GAME_WIDTH - textW) / 2, GamePanel.GAME_HEIGHT / 3);
             g.setComposite(original);
         }
     }

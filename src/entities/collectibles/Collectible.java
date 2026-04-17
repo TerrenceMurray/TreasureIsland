@@ -1,7 +1,6 @@
 package entities.collectibles;
 
 import entities.GameEntity;
-import java.awt.Graphics2D;
 
 public abstract class Collectible extends GameEntity {
 

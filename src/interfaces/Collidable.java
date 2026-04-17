@@ -1,7 +1,7 @@
 package interfaces;
 
-import java.awt.Rectangle;
+import java.awt.geom.Rectangle2D;
 
 public interface Collidable {
-    Rectangle getBounds();
+    Rectangle2D.Double getBoundingRectangle();
 }

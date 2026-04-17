@@ -4,10 +4,8 @@ import entities.Player;
 import levels.Level;
 import levels.Level1;
 import levels.Level2;
-import levels.TreasureRoom;
 
 import javax.swing.JPanel;
-import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Dimension;
 import java.awt.Color;
@@ -16,7 +14,7 @@ import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.image.BufferedImage;
 
-public class GameLoop extends JPanel implements Runnable, KeyListener {
+public class GamePanel extends JPanel implements Runnable, KeyListener {
 
     private static final GameConfig CFG = GameConfig.getInstance();
     public static final int GAME_WIDTH = CFG.getInt("game.width", 960);
@@ -25,7 +23,8 @@ public class GameLoop extends JPanel implements Runnable, KeyListener {
     private static final long OPTIMAL_TIME = 1_000_000_000 / TARGET_FPS;
 
     private Thread gameThread;
-    private boolean running;
+    private boolean isRunning;
+    private boolean isPaused;
 
     private BufferedImage buffer;
 
@@ -36,7 +35,7 @@ public class GameLoop extends JPanel implements Runnable, KeyListener {
     private int transitionTimer;
     private static final int TRANSITION_DELAY = 120;
 
-    public GameLoop() {
+    public GamePanel() {
         setPreferredSize(new Dimension(GAME_WIDTH, GAME_HEIGHT));
         setFocusable(true);
         requestFocusInWindow();
@@ -52,15 +51,16 @@ public class GameLoop extends JPanel implements Runnable, KeyListener {
         currentLevel = new Level1(player, camera);
     }
 
-    public void start() {
-        if (running) return;
-        running = true;
+    public void startGame() {
+        if (isRunning) return;
+        isRunning = true;
+        isPaused = false;
         gameThread = new Thread(this);
         gameThread.start();
     }
 
-    public void stop() {
-        running = false;
+    public void endGame() {
+        isRunning = false;
         try {
             gameThread.join();
         } catch (InterruptedException e) {
@@ -68,29 +68,40 @@ public class GameLoop extends JPanel implements Runnable, KeyListener {
         }
     }
 
+    public void pauseGame() {
+        isPaused = !isPaused;
+    }
+
+    public void startNewGame() {
+        if (isRunning) endGame();
+        GameStateManager.getInstance().resetScore();
+        GameStateManager.getInstance().setState("PLAYING");
+        levelNumber = 1;
+        player = new Player(
+            CFG.getFloat("player.spawnX", 100),
+            CFG.getFloat("player.spawnY", 400)
+        );
+        camera = new Camera(GAME_WIDTH, GAME_WIDTH);
+        currentLevel = new Level1(player, camera);
+        startGame();
+    }
+
     @Override
     public void run() {
-        long lastTime = System.nanoTime();
-
-        while (running) {
-            long now = System.nanoTime();
-
-            if (now - lastTime >= OPTIMAL_TIME) {
-                lastTime = now;
-                update();
-                render();
-                repaint();
-            } else {
-                try {
-                    Thread.sleep(1);
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                }
+        try {
+            while (isRunning) {
+                long startTime = System.nanoTime();
+                if (!isPaused) gameUpdate();
+                gameRender();
+                long sleepTime = (OPTIMAL_TIME - (System.nanoTime() - startTime)) / 1_000_000;
+                if (sleepTime > 0) Thread.sleep(sleepTime);
             }
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
         }
     }
 
-    private void update() {
+    public void gameUpdate() {
         String state = GameStateManager.getInstance().getState();
 
         if (state.equals("PLAYING")) {
@@ -123,34 +134,41 @@ public class GameLoop extends JPanel implements Runnable, KeyListener {
         }
     }
 
-    private void render() {
-        Graphics2D g2 = buffer.createGraphics();
+    public void gameRender() {
+        // Draw onto the back buffer (double buffering)
+        Graphics2D imageContext = (Graphics2D) buffer.getGraphics();
         String state = GameStateManager.getInstance().getState();
 
-        g2.setColor(new Color(135, 206, 235));
-        g2.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+        imageContext.setColor(new Color(135, 206, 235));
+        imageContext.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
 
         if (state.equals("MENU")) {
-            drawMenu(g2);
+            drawMenu(imageContext);
         } else if (state.equals("PLAYING") || state.equals("LEVEL_COMPLETE") || state.equals("PAUSED")) {
-            currentLevel.draw(g2);
-            drawHUD(g2);
+            currentLevel.draw(imageContext);
+            drawHUD(imageContext);
 
             if (state.equals("LEVEL_COMPLETE")) {
-                drawCenteredText(g2, "Level Complete!", 48, Color.YELLOW, GAME_HEIGHT / 2 - 20);
+                drawCenteredText(imageContext, "Level Complete!", 48, Color.YELLOW, GAME_HEIGHT / 2 - 20);
             } else if (state.equals("PAUSED")) {
-                g2.setColor(new Color(0, 0, 0, 120));
-                g2.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
-                drawCenteredText(g2, "Paused", 48, Color.WHITE, GAME_HEIGHT / 2 - 10);
-                drawCenteredText(g2, "Press P to Resume", 18, Color.GRAY, GAME_HEIGHT / 2 + 30);
+                imageContext.setColor(new Color(0, 0, 0, 120));
+                imageContext.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+                drawCenteredText(imageContext, "Paused", 48, Color.WHITE, GAME_HEIGHT / 2 - 10);
+                drawCenteredText(imageContext, "Press P to Resume", 18, Color.GRAY, GAME_HEIGHT / 2 + 30);
             }
         } else if (state.equals("GAME_OVER")) {
-            drawEndScreen(g2, "Game Over");
+            drawEndScreen(imageContext, "Game Over");
         } else if (state.equals("VICTORY")) {
-            drawEndScreen(g2, "Victory!");
+            drawEndScreen(imageContext, "Victory!");
         }
 
-        g2.dispose();
+        // Blit the completed frame onto the panel in a single step
+        Graphics2D g2 = (Graphics2D) getGraphics();
+        if (g2 != null) {
+            g2.drawImage(buffer, 0, 0, GAME_WIDTH, GAME_HEIGHT, null);
+            g2.dispose();
+        }
+        imageContext.dispose();
     }
 
     private void drawMenu(Graphics2D g) {
@@ -207,12 +225,6 @@ public class GameLoop extends JPanel implements Runnable, KeyListener {
         g.setFont(new Font("Arial", Font.BOLD, size));
         int textWidth = g.getFontMetrics().stringWidth(text);
         g.drawString(text, (GAME_WIDTH - textWidth) / 2, y);
-    }
-
-    @Override
-    protected void paintComponent(Graphics g) {
-        super.paintComponent(g);
-        g.drawImage(buffer, 0, 0, null);
     }
 
     @Override

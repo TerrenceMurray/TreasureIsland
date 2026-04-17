@@ -3,7 +3,6 @@ package entities;
 import interfaces.Attackable;
 import engine.GameConfig;
 import rendering.AnimatedSprite;
-import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
 import java.util.HashSet;
