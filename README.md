@@ -56,5 +56,4 @@ src/                Java source
 config/             Level layout files and tunable game properties
 sounds/             In-game audio (see sounds/CREDITS.md for attribution)
 assets/             Sprite sheets and UI art
-docs/               Design document and weekly lab notes
 ```
