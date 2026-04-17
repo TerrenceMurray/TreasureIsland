@@ -4,69 +4,105 @@ width,3200
 [platforms]
 # Main deck (ground)
 0,480,3200,64
-# Upper deck — left section
-0,352,384,20
-# Mast platforms — stepping up
-512,416,192,20
-768,352,192,20
-512,288,192,20
-# Mid-deck platforms
+
+# === Section 1: Upper Deck + Below Deck (0-768) ===
+# Upper deck where player spawns
+0,352,384,128
+
+# === Section 2: Mast Area (768-1408) ===
+# Stepping platforms going up
+640,416,192,20
+832,352,192,20
+# High mast platform
+704,288,192,20
+# Extra platform
 1088,384,192,20
-1344,320,192,20
-# Lower hanging platforms
-1600,416,192,20
-1856,416,192,20
-# Upper right platforms
-2048,352,192,20
-2304,288,192,20
-# Boss arena wall
-2688,352,192,128
+
+# === Section 3: Mid Ship (1408-2048) ===
+# Floating plank platforms
+1344,416,192,20
+1536,352,192,20
+1728,416,192,20
+# Lower plank
+1920,384,192,20
+
+# === Section 4: Approach (2048-2560) ===
+2112,416,192,20
+2304,352,192,20
+2496,288,192,20
+
+# === Section 5: Boss Arena (2560-3200) ===
+# Large raised boss platform
+2624,352,576,128
 
 [diamonds]
 # Upper deck
-128,332
+64,332
 192,332
-# Mast area
-576,396
-832,332
-576,268
-# Mid platforms
+# Below deck ground
+64,460
+256,460
+448,460
+# Mast stepping
+704,396
+896,332
+# High mast
+768,268
+# Extra platform
 1152,364
-1408,300
-# Hanging platforms
-1664,396
-1920,396
-# Upper right
-2112,332
-2368,268
-# Ground scatter
-960,460
-1500,460
-2000,460
+# Ground between
+1024,460
+# Mid ship planks
+1408,396
+1600,332
+1792,396
+1984,364
+# Ground mid
+1280,460
+1600,460
+# Approach
+2176,396
+2368,332
+2560,268
+# Boss arena
+2752,332
+2880,332
+3008,332
+3136,332
 
 [potions]
-# Hidden on high mast
-576,268
-# Mid level
-1408,300
-# Before boss
-2560,460
+# Below deck — hidden
+320,460
+# High mast — hard to reach
+768,268
+# Mid ship plank
+1600,332
+# Approach high
+2560,268
+# Boss arena
+3072,332
 
 [pinkstars]
-# Main deck patrols
-320,450
-960,450
-1500,450
-# On platforms
-1152,354
-2112,322
+# Below deck
+256,450
+# Ground mast area
+1024,450
+# Mid ship ground
+1408,450
+# Approach ground
+2048,450
+# Boss arena
+2816,322
 
 [crabbies]
-# Main deck
-700,450
-1200,450
-1800,450
-2400,450
+# Below deck
+512,450
+# Ground mid
+1280,450
+# Before boss
+2368,450
+# Boss arena
+3008,322
 
 [boss]
-2800,416
+2944,288

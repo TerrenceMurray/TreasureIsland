@@ -47,6 +47,7 @@ public abstract class Level {
     protected String levelName;
     protected int levelNameTimer;
     private static final int LEVEL_NAME_DURATION = 120;
+    protected int groundOffset = 0;
 
     public Level(Player player, Camera camera, String levelFile, String bgPath, String levelName) {
         this.player = player;
@@ -319,8 +320,12 @@ public abstract class Level {
         // Back palm trees
         palmTrees.drawBack(g, levelWidth);
 
-        terrain.draw(g, platforms);
+        drawTerrain(g);
         decor.draw(g);
+
+        // Offset entities to align with terrain surface
+        g.translate(0, -groundOffset);
+
         for (Collectible c : collectibles) {
             if (!c.isCollected()) {
                 c.draw(g);
@@ -347,6 +352,8 @@ public abstract class Level {
 
         effects.draw(g);
 
+        g.translate(0, groundOffset);
+
         // Front palm trees
         palmTrees.drawFront(g, levelWidth);
 
@@ -364,6 +371,12 @@ public abstract class Level {
             g.setComposite(original);
         }
     }
+
+    protected void drawTerrain(Graphics2D g) {
+        terrain.draw(g, platforms);
+    }
+
+    public int getGroundOffset() { return groundOffset; }
 
     public boolean isComplete() {
         return complete;

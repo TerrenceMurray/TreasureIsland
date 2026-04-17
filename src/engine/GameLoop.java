@@ -44,9 +44,12 @@ public class GameLoop extends JPanel implements Runnable, KeyListener {
 
         buffer = new BufferedImage(GAME_WIDTH, GAME_HEIGHT, BufferedImage.TYPE_INT_ARGB);
 
-        player = new Player(64, 280);
+        player = new Player(
+            CFG.getFloat("player.spawnX", 100),
+            CFG.getFloat("player.spawnY", 400)
+        );
         camera = new Camera(GAME_WIDTH, GAME_WIDTH);
-        currentLevel = new Level2(player, camera);
+        currentLevel = new Level1(player, camera);
     }
 
     public void start() {
