@@ -1,12 +1,10 @@
 package rendering;
 
-import javax.imageio.ImageIO;
+import engine.ImageManager;
 import java.awt.AlphaComposite;
 import java.awt.Composite;
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
-import java.io.File;
-import java.io.IOException;
 
 public class ScrollingBackground {
 
@@ -26,34 +24,25 @@ public class ScrollingBackground {
     public ScrollingBackground(String imagePath, int screenWidth, int screenHeight) {
         this.screenWidth = screenWidth;
         this.screenHeight = screenHeight;
-        bgImage = loadImage(imagePath);
-        bigClouds = loadImage(ASSET_BASE + "Big Clouds.png");
+        bgImage = ImageManager.loadBufferedImage(imagePath);
+        bigClouds = ImageManager.loadBufferedImage(ASSET_BASE + "Big Clouds.png");
         smallClouds = new BufferedImage[] {
-            loadImage(ASSET_BASE + "Small Cloud 1.png"),
-            loadImage(ASSET_BASE + "Small Cloud 2.png"),
-            loadImage(ASSET_BASE + "Small Cloud 3.png")
+            ImageManager.loadBufferedImage(ASSET_BASE + "Small Cloud 1.png"),
+            ImageManager.loadBufferedImage(ASSET_BASE + "Small Cloud 2.png"),
+            ImageManager.loadBufferedImage(ASSET_BASE + "Small Cloud 3.png")
         };
         waterReflectBig = new BufferedImage[] {
-            loadImage(ASSET_BASE + "Water Reflect Big 01.png"),
-            loadImage(ASSET_BASE + "Water Reflect Big 02.png"),
-            loadImage(ASSET_BASE + "Water Reflect Big 03.png"),
-            loadImage(ASSET_BASE + "Water Reflect Big 04.png"),
+            ImageManager.loadBufferedImage(ASSET_BASE + "Water Reflect Big 01.png"),
+            ImageManager.loadBufferedImage(ASSET_BASE + "Water Reflect Big 02.png"),
+            ImageManager.loadBufferedImage(ASSET_BASE + "Water Reflect Big 03.png"),
+            ImageManager.loadBufferedImage(ASSET_BASE + "Water Reflect Big 04.png"),
         };
         waterReflectSmall = new BufferedImage[] {
-            loadImage(ASSET_BASE + "Water Reflect Small 01.png"),
-            loadImage(ASSET_BASE + "Water Reflect Small 02.png"),
-            loadImage(ASSET_BASE + "Water Reflect Small 03.png"),
-            loadImage(ASSET_BASE + "Water Reflect Small 04.png"),
+            ImageManager.loadBufferedImage(ASSET_BASE + "Water Reflect Small 01.png"),
+            ImageManager.loadBufferedImage(ASSET_BASE + "Water Reflect Small 02.png"),
+            ImageManager.loadBufferedImage(ASSET_BASE + "Water Reflect Small 03.png"),
+            ImageManager.loadBufferedImage(ASSET_BASE + "Water Reflect Small 04.png"),
         };
-    }
-
-    private BufferedImage loadImage(String path) {
-        try {
-            return ImageIO.read(new File(path));
-        } catch (IOException e) {
-            System.err.println("Could not load: " + path);
-            return null;
-        }
     }
 
     public void update() {

@@ -1,11 +1,9 @@
 package rendering;
 
-import javax.imageio.ImageIO;
+import engine.ImageManager;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
 import java.awt.image.BufferedImage;
-import java.io.File;
-import java.io.IOException;
 import java.util.List;
 
 public class TerrainRenderer {
@@ -26,16 +24,14 @@ public class TerrainRenderer {
 
     public TerrainRenderer(String sheetPath, int platformLift) {
         this.platformLift = platformLift;
-        try {
-            BufferedImage sheet = ImageIO.read(new File(sheetPath));
+        BufferedImage sheet = ImageManager.loadBufferedImage(sheetPath);
+        if (sheet != null) {
             topLeft = sheet.getSubimage(0, 0, TILE, TILE);
             topMid = sheet.getSubimage(TILE, 0, TILE, TILE);
             topRight = sheet.getSubimage(TILE * 2, 0, TILE, TILE);
             midLeft = sheet.getSubimage(0, TILE, TILE, TILE);
             midMid = sheet.getSubimage(TILE, TILE, TILE, TILE);
             midRight = sheet.getSubimage(TILE * 2, TILE, TILE, TILE);
-        } catch (IOException e) {
-            System.err.println("Could not load terrain: " + sheetPath);
         }
     }
 

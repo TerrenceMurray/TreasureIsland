@@ -1,10 +1,8 @@
 package rendering;
 
-import javax.imageio.ImageIO;
+import engine.ImageManager;
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
-import java.io.File;
-import java.io.IOException;
 
 public class DecorRenderer {
 
@@ -22,18 +20,9 @@ public class DecorRenderer {
     public DecorRenderer() {
         flagFrames = new BufferedImage[9];
         for (int i = 0; i < 9; i++) {
-            flagFrames[i] = loadImage(FLAG_BASE + String.format("Flag %02d.png", i + 1));
+            flagFrames[i] = ImageManager.loadBufferedImage(FLAG_BASE + String.format("Flag %02d.png", i + 1));
         }
-        flagPlatform = loadImage(FLAG_BASE + "Platform.png");
-    }
-
-    private BufferedImage loadImage(String path) {
-        try {
-            return ImageIO.read(new File(path));
-        } catch (IOException e) {
-            System.err.println("Could not load: " + path);
-            return null;
-        }
+        flagPlatform = ImageManager.loadBufferedImage(FLAG_BASE + "Platform.png");
     }
 
     public void setPlacements(int[][] placements) {

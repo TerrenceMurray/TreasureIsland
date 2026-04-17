@@ -1,10 +1,9 @@
 package rendering;
 
-import javax.imageio.ImageIO;
+import engine.ImageManager;
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 import java.io.File;
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -33,11 +32,7 @@ public class AnimatedSprite {
         java.util.Arrays.sort(files);
         BufferedImage[] frames = new BufferedImage[files.length];
         for (int i = 0; i < files.length; i++) {
-            try {
-                frames[i] = ImageIO.read(files[i]);
-            } catch (IOException e) {
-                System.err.println("Could not load frame: " + files[i]);
-            }
+            frames[i] = ImageManager.loadBufferedImage(files[i].getPath());
         }
         animations.put(state, frames);
 
@@ -50,11 +45,7 @@ public class AnimatedSprite {
         BufferedImage[] frames = new BufferedImage[count];
         for (int i = 0; i < count; i++) {
             String filename = String.format("%s/%s %02d.png", folderPath, prefix, i + 1);
-            try {
-                frames[i] = ImageIO.read(new File(filename));
-            } catch (IOException e) {
-                System.err.println("Could not load frame: " + filename);
-            }
+            frames[i] = ImageManager.loadBufferedImage(filename);
         }
         animations.put(state, frames);
         if (currentState == null) currentState = state;

@@ -1,10 +1,8 @@
 package rendering;
 
-import javax.imageio.ImageIO;
+import engine.ImageManager;
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
-import java.io.File;
-import java.io.IOException;
 
 public class PalmTreeRenderer {
 
@@ -21,35 +19,26 @@ public class PalmTreeRenderer {
 
     public PalmTreeRenderer() {
         backTrees = new BufferedImage[] {
-            loadImage(BACK_BASE + "Back Palm Tree Regular 01.png"),
-            loadImage(BACK_BASE + "Back Palm Tree Regular 02.png"),
-            loadImage(BACK_BASE + "Back Palm Tree Regular 03.png"),
-            loadImage(BACK_BASE + "Back Palm Tree Regular 04.png"),
-            loadImage(BACK_BASE + "Back Palm Tree Left 01.png"),
-            loadImage(BACK_BASE + "Back Palm Tree Left 02.png"),
-            loadImage(BACK_BASE + "Back Palm Tree Right 01.png"),
-            loadImage(BACK_BASE + "Back Palm Tree Right 02.png"),
+            ImageManager.loadBufferedImage(BACK_BASE + "Back Palm Tree Regular 01.png"),
+            ImageManager.loadBufferedImage(BACK_BASE + "Back Palm Tree Regular 02.png"),
+            ImageManager.loadBufferedImage(BACK_BASE + "Back Palm Tree Regular 03.png"),
+            ImageManager.loadBufferedImage(BACK_BASE + "Back Palm Tree Regular 04.png"),
+            ImageManager.loadBufferedImage(BACK_BASE + "Back Palm Tree Left 01.png"),
+            ImageManager.loadBufferedImage(BACK_BASE + "Back Palm Tree Left 02.png"),
+            ImageManager.loadBufferedImage(BACK_BASE + "Back Palm Tree Right 01.png"),
+            ImageManager.loadBufferedImage(BACK_BASE + "Back Palm Tree Right 02.png"),
         };
         frontTops = new BufferedImage[] {
-            loadImage(FRONT_BASE + "Front Palm Tree Top 01.png"),
-            loadImage(FRONT_BASE + "Front Palm Tree Top 02.png"),
-            loadImage(FRONT_BASE + "Front Palm Tree Top 03.png"),
-            loadImage(FRONT_BASE + "Front Palm Tree Top 04.png"),
+            ImageManager.loadBufferedImage(FRONT_BASE + "Front Palm Tree Top 01.png"),
+            ImageManager.loadBufferedImage(FRONT_BASE + "Front Palm Tree Top 02.png"),
+            ImageManager.loadBufferedImage(FRONT_BASE + "Front Palm Tree Top 03.png"),
+            ImageManager.loadBufferedImage(FRONT_BASE + "Front Palm Tree Top 04.png"),
         };
 
-        BufferedImage trunkSheet = loadImage(FRONT_BASE + "Front Palm Bottom and Grass (32x32).png");
+        BufferedImage trunkSheet = ImageManager.loadBufferedImage(FRONT_BASE + "Front Palm Bottom and Grass (32x32).png");
         if (trunkSheet != null) {
             trunkStraight = trunkSheet.getSubimage(0, 0, TILE, TILE);
             trunkSheet.getSubimage(TILE, 0, TILE, TILE);
-        }
-    }
-
-    private BufferedImage loadImage(String path) {
-        try {
-            return ImageIO.read(new File(path));
-        } catch (IOException e) {
-            System.err.println("Could not load: " + path);
-            return null;
         }
     }
 

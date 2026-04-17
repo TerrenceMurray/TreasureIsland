@@ -1,11 +1,9 @@
 package rendering;
 
-import javax.imageio.ImageIO;
+import engine.ImageManager;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
 import java.awt.image.BufferedImage;
-import java.io.File;
-import java.io.IOException;
 import java.util.List;
 
 public class PirateTerrainRenderer {
@@ -30,8 +28,9 @@ public class PirateTerrainRenderer {
 
     public PirateTerrainRenderer(int platformLift) {
         this.platformLift = platformLift;
-        try {
-            BufferedImage sheet = ImageIO.read(new File(TERRAIN_PATH));
+
+        BufferedImage sheet = ImageManager.loadBufferedImage(TERRAIN_PATH);
+        if (sheet != null) {
             // (1,1)=top-left, (5,1)=top-mid, (3,1)=top-right (gold trim)
             // (1,2)=left body, (5,2)=mid body, (3,2)=right body
             topLeft = sheet.getSubimage(TILE, TILE, TILE, TILE);
@@ -40,19 +39,14 @@ public class PirateTerrainRenderer {
             midLeft = sheet.getSubimage(TILE, TILE * 2, TILE, TILE);
             midMid = sheet.getSubimage(TILE * 5, TILE * 2, TILE, TILE);
             midRight = sheet.getSubimage(TILE * 3, TILE * 2, TILE, TILE);
-        } catch (IOException e) {
-            System.err.println("Could not load pirate terrain");
         }
 
-        try {
-            BufferedImage platSheet = ImageIO.read(new File(PLATFORM_PATH));
-            // Platform content at row 1-2, cols 1-4
-            // Row 2 is the thicker wooden plank
+        BufferedImage platSheet = ImageManager.loadBufferedImage(PLATFORM_PATH);
+        if (platSheet != null) {
+            // Row 2 is the thicker wooden plank (cols 1-4)
             platLeft = platSheet.getSubimage(TILE, TILE * 2, TILE, TILE);
             platMid = platSheet.getSubimage(TILE * 2, TILE * 2, TILE, TILE);
             platRight = platSheet.getSubimage(TILE * 4, TILE * 2, TILE, TILE);
-        } catch (IOException e) {
-            System.err.println("Could not load pirate platforms");
         }
     }
 
