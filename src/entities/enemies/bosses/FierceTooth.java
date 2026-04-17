@@ -1,6 +1,5 @@
 package entities.enemies.bosses;
 
-import entities.enemies.Enemy;
 import entities.Player;
 import rendering.AnimatedSprite;
 import java.awt.Graphics2D;
