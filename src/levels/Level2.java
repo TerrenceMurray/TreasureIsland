@@ -2,11 +2,11 @@ package levels;
 
 import entities.Player;
 import entities.collectibles.TreasureChest;
-import entities.enemies.Boss;
-import entities.enemies.EnragedFierceTooth;
+import entities.enemies.bosses.Boss;
+import entities.enemies.bosses.EnragedFierceTooth;
 import engine.Camera;
-import engine.GameConfig;
-import engine.GameStateManager;
+import engine.managers.GameConfig;
+import engine.managers.GameStateManager;
 
 /**
     The Level2 class is the palm-tree island level. It

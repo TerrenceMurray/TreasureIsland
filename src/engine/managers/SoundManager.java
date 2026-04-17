@@ -1,4 +1,4 @@
-package engine;
+package engine.managers;
 
 import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;

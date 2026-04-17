@@ -1,7 +1,8 @@
-package entities.enemies;
+package entities.enemies.bosses;
 
+import entities.enemies.Enemy;
 import entities.Player;
-import engine.ImageManager;
+import engine.managers.ImageManager;
 import rendering.AnimatedSprite;
 import java.awt.Color;
 import java.awt.Font;

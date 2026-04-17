@@ -1,7 +1,7 @@
 package entities;
 
 import interfaces.Attackable;
-import engine.GameConfig;
+import engine.managers.GameConfig;
 import rendering.AnimatedSprite;
 import java.awt.Graphics2D;
 import java.awt.geom.Rectangle2D;

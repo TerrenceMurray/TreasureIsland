@@ -1,34 +1,31 @@
-package entities.enemies;
+package entities.enemies.bosses;
 
+import entities.enemies.Enemy;
 import entities.Player;
 import rendering.AnimatedSprite;
-import java.awt.AlphaComposite;
-import java.awt.Color;
 import java.awt.Graphics2D;
-import java.awt.image.BufferedImage;
 
 /**
-    The EnragedFierceTooth class is the final boss. It is a
-    larger, faster, red-tinted version of Fierce Tooth with
-    a shorter attack interval and higher damage.
+    The FierceTooth class is the first boss, fought at the
+    end of level 1. It walks toward the player and lunges
+    with a sword swing when close.
 */
-public class EnragedFierceTooth extends Boss {
+public class FierceTooth extends Boss {
 
     // === Config ===
-    // Shares the Fierce Tooth sprite sheet; the red tint is applied at draw time.
     private static final String SPRITE_BASE = "assets/Treasure Hunters/The Crusty Crew/Sprites/Fierce Tooth/";
-    // Bigger scale than regular Fierce Tooth (3× vs 2×) to sell "enraged".
-    private static final int DRAW_SCALE = 3;
+    // Each source sprite pixel is drawn as a DRAW_SCALE×DRAW_SCALE block.
+    private static final int DRAW_SCALE = 2;
     // Empty pixels below the feet in the source frames (2 src × scale).
     private static final int FOOT_PADDING = 2 * DRAW_SCALE;
 
     // === Animation ===
     private AnimatedSprite attackEffect;
 
-    public EnragedFierceTooth(float x, float y, Player target) {
-        // 70×80 hitbox (larger), 6 HP, 2 damage, 90-frame attack interval
-        // (~1.5s, faster than Fierce Tooth), skull tile col 3 row 2.
-        super(x, y, 70, 80, 6, 2, 90, target, "Enraged Fierce Tooth", 3, 2);
+    public FierceTooth(float x, float y, Player target) {
+        // 56×64 hitbox, 6 HP, 1 damage, 150-frame attack interval (~2.5s),
+        // skull tile at col 2, row 0 of the 4×3 sheet.
+        super(x, y, 56, 64, 6, 1, 150, target, "Fierce Tooth", 2, 0);
         initSprite();
     }
 
@@ -47,7 +44,7 @@ public class EnragedFierceTooth extends Boss {
 
     @Override
     protected float getWalkSpeed() {
-        return 1.8f;
+        return 1.2f;
     }
 
     @Override
@@ -68,24 +65,7 @@ public class EnragedFierceTooth extends Boss {
         int drawH = 30 * DRAW_SCALE;
         int drawX = (int) x - (drawW - width) / 2;
         int drawY = (int) y + height - drawH + FOOT_PADDING;
-
-        drawWithDeathFade(g, () -> {
-            // Draw sprite to a temp buffer so we can tint only the opaque
-            // pixels, without colouring the transparent background.
-            BufferedImage temp = new BufferedImage(drawW, drawH, BufferedImage.TYPE_INT_ARGB);
-            Graphics2D tg = temp.createGraphics();
-            sprite.draw(tg, 0, 0, drawW, drawH);
-
-            // SRC_ATOP: the red fill is kept only where the destination
-            // (the sprite) has alpha > 0. 30% strength so the sprite detail
-            // still shows through.
-            tg.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_ATOP, 0.3f));
-            tg.setColor(new Color(255, 0, 0));
-            tg.fillRect(0, 0, drawW, drawH);
-            tg.dispose();
-
-            g.drawImage(temp, drawX, drawY, null);
-        });
+        drawWithDeathFade(g, () -> sprite.draw(g, drawX, drawY, drawW, drawH));
         drawHealthBar(g);
         drawBossName(g);
         drawSkull(g);

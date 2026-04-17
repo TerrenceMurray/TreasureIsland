@@ -1,5 +1,6 @@
-package rendering;
+package rendering.effects;
 
+import rendering.AnimatedSprite;
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.util.ArrayList;

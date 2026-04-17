@@ -1,6 +1,6 @@
-package rendering;
+package rendering.background;
 
-import engine.ImageManager;
+import engine.managers.ImageManager;
 import java.awt.AlphaComposite;
 import java.awt.Composite;
 import java.awt.Graphics2D;

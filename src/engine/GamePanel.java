@@ -1,11 +1,13 @@
 package engine;
 
+import engine.managers.GameConfig;
+import engine.managers.GameStateManager;
 import entities.Player;
 import levels.Level;
 import levels.Level1;
 import levels.Level2;
 
-import rendering.HUD;
+import rendering.ui.HUD;
 
 import javax.swing.JPanel;
 import java.awt.Graphics2D;

@@ -1,6 +1,6 @@
-package rendering;
+package rendering.terrain;
 
-import engine.ImageManager;
+import engine.managers.ImageManager;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
 import java.awt.image.BufferedImage;

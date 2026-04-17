@@ -1,4 +1,4 @@
-package engine;
+package engine.managers;
 
 import javax.imageio.ImageIO;
 import javax.swing.ImageIcon;

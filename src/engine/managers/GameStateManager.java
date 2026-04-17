@@ -1,4 +1,4 @@
-package engine;
+package engine.managers;
 
 /**
     The GameStateManager class is a singleton that tracks the

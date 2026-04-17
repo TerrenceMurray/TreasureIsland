@@ -2,7 +2,7 @@ package levels;
 
 import entities.Player;
 import entities.collectibles.TreasureChest;
-import entities.enemies.Boss;
+import entities.enemies.bosses.Boss;
 import engine.Camera;
 
 /**

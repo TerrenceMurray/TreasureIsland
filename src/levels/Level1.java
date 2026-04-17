@@ -1,12 +1,12 @@
 package levels;
 
 import entities.Player;
-import entities.enemies.Boss;
-import entities.enemies.FierceTooth;
+import entities.enemies.bosses.Boss;
+import entities.enemies.bosses.FierceTooth;
 import engine.Camera;
-import engine.GameConfig;
-import engine.GameStateManager;
-import rendering.PirateTerrainRenderer;
+import engine.managers.GameConfig;
+import engine.managers.GameStateManager;
+import rendering.terrain.PirateTerrainRenderer;
 import java.awt.Graphics2D;
 
 /**

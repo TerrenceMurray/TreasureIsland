@@ -1,6 +1,6 @@
-package rendering;
+package rendering.decor;
 
-import engine.ImageManager;
+import engine.managers.ImageManager;
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 

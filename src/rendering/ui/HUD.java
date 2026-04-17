@@ -1,7 +1,7 @@
-package rendering;
+package rendering.ui;
 
-import engine.GameStateManager;
-import engine.ImageManager;
+import engine.managers.GameStateManager;
+import engine.managers.ImageManager;
 import entities.Player;
 import java.awt.Color;
 import java.awt.Font;

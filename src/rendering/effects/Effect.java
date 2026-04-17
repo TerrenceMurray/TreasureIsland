@@ -1,5 +1,6 @@
-package rendering;
+package rendering.effects;
 
+import rendering.AnimatedSprite;
 import java.awt.AlphaComposite;
 import java.awt.Color;
 import java.awt.Composite;
