@@ -45,6 +45,14 @@ public class GamePanel extends JPanel implements Runnable, KeyListener {
     // === Rendering ===
     private BufferedImage buffer;
 
+    // === UI sprites (Wood and Paper UI asset pack) ===
+    private BufferedImage heartFull;
+    private BufferedImage heartEmpty;
+    private BufferedImage uiBoard;
+    private static final String UI_BASE = "assets/Treasure Hunters/Wood and Paper UI/Sprites/";
+    private static final int HEART_DRAW = 44;     // pixels drawn per heart on screen
+    private static final int HUD_MARGIN = 12;
+
     // === Game state ===
     private Player player;
     private Camera camera;
@@ -68,6 +76,10 @@ public class GamePanel extends JPanel implements Runnable, KeyListener {
         setDoubleBuffered(false);
 
         buffer = new BufferedImage(GAME_WIDTH, GAME_HEIGHT, BufferedImage.TYPE_INT_ARGB);
+
+        heartFull = ImageManager.loadBufferedImage(UI_BASE + "Life Bars/Big Bars/1.png");
+        heartEmpty = toGrayscale(heartFull);
+        uiBoard = ImageManager.loadBufferedImage(UI_BASE + "Prefabs/1.png");
 
         player = new Player(
             CFG.getFloat("player.spawnX", 100),
@@ -225,59 +237,141 @@ public class GamePanel extends JPanel implements Runnable, KeyListener {
     }
 
     private void drawMenu(Graphics2D g) {
-        drawCenteredText(g, "Treasure Island", 48, Color.WHITE, GAME_HEIGHT / 2 - 40);
-        drawCenteredText(g, "Press ENTER to Play", 20, Color.WHITE, GAME_HEIGHT / 2 + 20);
-        drawCenteredText(g, "Press Q to Quit", 16, Color.GRAY, GAME_HEIGHT / 2 + 60);
+        drawUiPanel(g, 220, 360);
+        drawCenteredText(g, "Treasure Island", 40, new Color(255, 230, 150), GAME_HEIGHT / 2 - 40);
+        drawCenteredText(g, "Press ENTER to Play", 18, Color.WHITE, GAME_HEIGHT / 2 + 20);
+        drawCenteredText(g, "Press Q to Quit", 14, new Color(220, 220, 220), GAME_HEIGHT / 2 + 50);
     }
 
     private void drawEndScreen(Graphics2D g, String title) {
-        drawCenteredText(g, title, 48, Color.WHITE, GAME_HEIGHT / 2 - 40);
-        drawCenteredText(g, "Score: " + GameStateManager.getInstance().getScore(), 24, Color.YELLOW, GAME_HEIGHT / 2 + 10);
-        drawCenteredText(g, "Press Q to Quit", 16, Color.GRAY, GAME_HEIGHT / 2 + 60);
+        // Darken the world behind the board
+        g.setColor(new Color(0, 0, 0, 140));
+        g.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+        drawUiPanel(g, 260, 320);
+        drawCenteredText(g, title, 40, new Color(255, 230, 150), GAME_HEIGHT / 2 - 40);
+        drawCenteredText(g, "Score: " + GameStateManager.getInstance().getScore(), 22, Color.WHITE, GAME_HEIGHT / 2 + 10);
+        drawCenteredText(g, "Press Q to Quit", 14, new Color(220, 220, 220), GAME_HEIGHT / 2 + 50);
+    }
+
+    /**
+        Draws the wooden UI board centred on the screen at the
+        given size. The board is a 64x64 prefab — we stretch it
+        to the requested size.
+    */
+    private void drawUiPanel(Graphics2D g, int w, int h) {
+        if (uiBoard == null) return;
+        int px = (GAME_WIDTH - w) / 2;
+        int py = (GAME_HEIGHT - h) / 2;
+        g.drawImage(uiBoard, px, py, w, h, null);
     }
 
     private void drawHUD(Graphics2D g) {
-        // Hearts
-        for (int i = 0; i < player.getMaxHealth(); i++) {
-            g.setColor(i < player.getHealth() ? Color.RED : Color.DARK_GRAY);
-            g.fillOval(10 + i * 30, 10, 20, 20);
+        // Hearts — one brass-frame heart per health slot, grayed out when lost
+        int maxHealth = player.getMaxHealth();
+        int currentHealth = player.getHealth();
+        for (int i = 0; i < maxHealth; i++) {
+            BufferedImage sprite = (i < currentHealth) ? heartFull : heartEmpty;
+            if (sprite == null) continue;
+            int hx = HUD_MARGIN + i * (HEART_DRAW - 6);  // slight overlap for a tighter row
+            g.drawImage(sprite, hx, HUD_MARGIN, HEART_DRAW, HEART_DRAW, null);
         }
 
-        // Score
-        g.setColor(Color.WHITE);
-        g.setFont(new Font("Arial", Font.PLAIN, 14));
-        g.drawString("Score: " + GameStateManager.getInstance().getScore(), GAME_WIDTH - 140, 20);
+        // Score — outlined pixel font, right-aligned to match the controls column
+        String scoreText = "Score: " + GameStateManager.getInstance().getScore();
+        int scoreX = GAME_WIDTH - HUD_MARGIN - measureWidth(g, scoreText, 18);
+        drawOutlinedString(g, scoreText, scoreX, 30, 18, new Color(255, 230, 150));
 
-        // Controls (top-right)
-        g.setColor(new Color(255, 255, 255, 180));
-        g.setFont(new Font("Arial", Font.PLAIN, 12));
-        int cx = GAME_WIDTH - 140;
-        g.drawString("A/D  Move", cx, 45);
-        g.drawString("W/Space  Jump", cx, 60);
-        g.drawString("Shift  Attack", cx, 75);
-        g.drawString("P  Pause", cx, 90);
+        // Controls (top-right). Two-column layout: keys right-aligned at a shared
+        // column boundary so the arrow separators line up neatly.
+        int controlsRight = GAME_WIDTH - HUD_MARGIN;
+        int keysRight = controlsRight - 70;   // right edge of the keys column
+        int actionsLeft = keysRight + 14;     // leaves room for the " > " separator
+        int cy = 58;
+        int lineH = 15;
+        drawControlRow(g, "A/D",     "Move",   keysRight, actionsLeft, cy);
+        drawControlRow(g, "W/Space", "Jump",   keysRight, actionsLeft, cy + lineH);
+        drawControlRow(g, "Shift",   "Attack", keysRight, actionsLeft, cy + lineH * 2);
+        drawControlRow(g, "P",       "Pause",  keysRight, actionsLeft, cy + lineH * 3);
 
         // Pause/Play button (bottom-left)
         String state = GameStateManager.getInstance().getState();
         int bx = 15, by = GAME_HEIGHT - 35;
         g.setColor(new Color(255, 255, 255, 160));
         if (state.equals("PAUSED")) {
-            // Play triangle
             int[] xp = {bx, bx, bx + 16};
             int[] yp = {by, by + 20, by + 10};
             g.fillPolygon(xp, yp, 3);
         } else {
-            // Pause bars
             g.fillRect(bx, by, 6, 20);
             g.fillRect(bx + 10, by, 6, 20);
         }
     }
 
     private void drawCenteredText(Graphics2D g, String text, int size, Color color, int y) {
+        int textX = centeredX(g, text, size);
+        drawOutlinedString(g, text, textX, y, size, color);
+    }
+
+    /**
+        Draws text in bold Monospaced font with a 1px black outline
+        in 8 directions, matching the in-world pixel-style banners.
+    */
+    private void drawOutlinedString(Graphics2D g, String text, int x, int y, int size, Color color) {
+        g.setFont(new Font("Monospaced", Font.BOLD, size));
+        g.setColor(Color.BLACK);
+        for (int dx = -1; dx <= 1; dx++) {
+            for (int dy = -1; dy <= 1; dy++) {
+                if (dx == 0 && dy == 0) continue;
+                g.drawString(text, x + dx, y + dy);
+            }
+        }
         g.setColor(color);
-        g.setFont(new Font("Arial", Font.BOLD, size));
-        int textWidth = g.getFontMetrics().stringWidth(text);
-        g.drawString(text, (GAME_WIDTH - textWidth) / 2, y);
+        g.drawString(text, x, y);
+    }
+
+    private int centeredX(Graphics2D g, String text, int size) {
+        return (GAME_WIDTH - measureWidth(g, text, size)) / 2;
+    }
+
+    private int measureWidth(Graphics2D g, String text, int size) {
+        g.setFont(new Font("Monospaced", Font.BOLD, size));
+        return g.getFontMetrics().stringWidth(text);
+    }
+
+    /**
+        Draws one row of the controls panel: key right-aligned at
+        keysRight, a small separator, then the action left-aligned
+        at actionsLeft. Keeps all rows in two clean columns.
+    */
+    private void drawControlRow(Graphics2D g, String key, String action, int keysRight, int actionsLeft, int y) {
+        int keySize = 12;
+        int actionSize = 12;
+        int keyX = keysRight - measureWidth(g, key, keySize);
+        drawOutlinedString(g, key, keyX, y, keySize, new Color(255, 230, 150));
+        drawOutlinedString(g, ">", keysRight + 2, y, keySize, new Color(180, 180, 180));
+        drawOutlinedString(g, action, actionsLeft, y, actionSize, Color.WHITE);
+    }
+
+    /**
+        Returns a grayscale copy of the given image, preserving
+        alpha. Uses the Week 6 pixel-tint pattern.
+    */
+    private static BufferedImage toGrayscale(BufferedImage src) {
+        if (src == null) return null;
+        BufferedImage copy = ImageManager.copyImage(src);
+        for (int py = 0; py < copy.getHeight(); py++) {
+            for (int px = 0; px < copy.getWidth(); px++) {
+                int pixel = copy.getRGB(px, py);
+                int alpha = (pixel >> 24) & 0xff;
+                if (alpha == 0) continue;
+                int red = (pixel >> 16) & 0xff;
+                int green = (pixel >> 8) & 0xff;
+                int blue = pixel & 0xff;
+                int gray = (red + green + blue) / 3;
+                copy.setRGB(px, py, (alpha << 24) | (gray << 16) | (gray << 8) | gray);
+            }
+        }
+        return copy;
     }
 
     @Override
