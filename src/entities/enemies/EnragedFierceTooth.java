@@ -15,7 +15,7 @@ public class EnragedFierceTooth extends Boss {
     private AnimatedSprite attackEffect;
 
     public EnragedFierceTooth(float x, float y, Player target) {
-        super(x, y, 70, 80, 6, 2, 90, target, "Enraged Fierce Tooth");
+        super(x, y, 70, 80, 6, 2, 90, target, "Enraged Fierce Tooth", 3, 2);
         initSprite();
     }
 
@@ -71,6 +71,7 @@ public class EnragedFierceTooth extends Boss {
         });
         drawHealthBar(g);
         drawBossName(g);
+        drawSkull(g);
     }
 
     @Override

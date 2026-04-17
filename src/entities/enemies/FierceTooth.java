@@ -12,7 +12,7 @@ public class FierceTooth extends Boss {
     private AnimatedSprite attackEffect;
 
     public FierceTooth(float x, float y, Player target) {
-        super(x, y, 56, 64, 6, 1, 150, target, "Fierce Tooth");
+        super(x, y, 56, 64, 6, 1, 150, target, "Fierce Tooth", 2, 0);
         initSprite();
     }
 
@@ -54,6 +54,7 @@ public class FierceTooth extends Boss {
         drawWithDeathFade(g, () -> sprite.draw(g, drawX, drawY, drawW, drawH));
         drawHealthBar(g);
         drawBossName(g);
+        drawSkull(g);
     }
 
     @Override

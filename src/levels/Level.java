@@ -368,10 +368,22 @@ public abstract class Level {
             float alpha = levelNameTimer > 60 ? 1f : levelNameTimer / 60f;
             java.awt.Composite original = g.getComposite();
             g.setComposite(java.awt.AlphaComposite.getInstance(java.awt.AlphaComposite.SRC_OVER, alpha));
-            g.setColor(Color.WHITE);
-            g.setFont(new Font("Arial", Font.BOLD, 36));
+            g.setFont(new Font("Monospaced", Font.BOLD, 36));
             int textW = g.getFontMetrics().stringWidth(levelName);
-            g.drawString(levelName, (GamePanel.GAME_WIDTH - textW) / 2, GamePanel.GAME_HEIGHT / 3);
+            int textX = (GamePanel.GAME_WIDTH - textW) / 2;
+            int textY = GamePanel.GAME_HEIGHT / 3;
+
+            // 2px black outline in 8 directions (bigger font → thicker outline)
+            g.setColor(Color.BLACK);
+            for (int dx = -2; dx <= 2; dx += 2) {
+                for (int dy = -2; dy <= 2; dy += 2) {
+                    if (dx == 0 && dy == 0) continue;
+                    g.drawString(levelName, textX + dx, textY + dy);
+                }
+            }
+            g.setColor(Color.WHITE);
+            g.drawString(levelName, textX, textY);
+
             g.setComposite(original);
         }
     }

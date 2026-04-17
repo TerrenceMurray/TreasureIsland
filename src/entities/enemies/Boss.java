@@ -1,10 +1,12 @@
 package entities.enemies;
 
 import entities.Player;
+import engine.ImageManager;
 import rendering.AnimatedSprite;
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.Graphics2D;
+import java.awt.image.BufferedImage;
 
 public abstract class Boss extends Enemy {
 
@@ -17,6 +19,10 @@ public abstract class Boss extends Enemy {
     protected boolean facingRight;
     protected AnimatedSprite sprite;
     protected String bossName;
+    private static final String SKULL_SHEET = "assets/Skull_Icons/PNG/Skull_Icons_128x96.png";
+    private static final int SKULL_TILE = 32;  // 4×3 tileset
+    private static BufferedImage skullSheet;  // loaded once, shared by all bosses
+    private BufferedImage skullIcon;          // per-boss sub-image
     private int jumpCooldown;
     private static final int JUMP_COOLDOWN_MAX = 90;
     private static final float JUMP_FORCE = -9f;
@@ -25,11 +31,16 @@ public abstract class Boss extends Enemy {
     private float airStartY;
     private float airStartVel;
 
-    public Boss(float x, float y, int width, int height, int health, int damage, int attackInterval, Player target, String bossName) {
+    public Boss(float x, float y, int width, int height, int health, int damage, int attackInterval, Player target, String bossName, int skullCol, int skullRow) {
         super(x, y, width, height, health, damage);
         this.attackInterval = attackInterval;
         this.target = target;
         this.bossName = bossName;
+
+        if (skullSheet == null) skullSheet = ImageManager.loadBufferedImage(SKULL_SHEET);
+        if (skullSheet != null) {
+            skullIcon = skullSheet.getSubimage(skullCol * SKULL_TILE, skullRow * SKULL_TILE, SKULL_TILE, SKULL_TILE);
+        }
     }
 
     @Override
@@ -115,10 +126,32 @@ public abstract class Boss extends Enemy {
 
     protected void drawBossName(Graphics2D g) {
         if (dying) return;
-        g.setColor(Color.WHITE);
-        g.setFont(new Font("Arial", Font.BOLD, 12));
+        g.setFont(new Font("Monospaced", Font.BOLD, 14));
+
         int nameW = g.getFontMetrics().stringWidth(bossName);
-        g.drawString(bossName, (int) x + width / 2 - nameW / 2, (int) y - 16);
+        int textX = (int) x + width / 2 - nameW / 2;
+        int textY = (int) y - 18;
+
+        // 1px black outline in 8 directions
+        g.setColor(Color.BLACK);
+        for (int dx = -1; dx <= 1; dx++) {
+            for (int dy = -1; dy <= 1; dy++) {
+                if (dx == 0 && dy == 0) continue;
+                g.drawString(bossName, textX + dx, textY + dy);
+            }
+        }
+
+        g.setColor(Color.WHITE);
+        g.drawString(bossName, textX, textY);
+    }
+
+    protected void drawSkull(Graphics2D g) {
+        if (dying || isDead() || skullIcon == null) return;
+        int skullW = 32;
+        int skullH = 32;
+        int skullX = (int) x + width / 2 - skullW / 2;
+        int skullY = (int) y - 32 - skullH;  // above the name
+        g.drawImage(skullIcon, skullX, skullY, skullW, skullH, null);
     }
 
     protected abstract float getWalkSpeed();
