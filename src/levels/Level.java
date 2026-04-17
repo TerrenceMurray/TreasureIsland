@@ -6,11 +6,11 @@ import entities.collectibles.Diamond;
 import entities.collectibles.HealthPotion;
 import entities.collectibles.TreasureChest;
 import entities.enemies.Enemy;
+import entities.enemies.EnemyWave;
 import entities.enemies.bosses.Boss;
 import entities.enemies.PinkStar;
 import entities.enemies.Crabby;
 import engine.Camera;
-import engine.managers.GameConfig;
 import engine.GamePanel;
 import engine.managers.GameStateManager;
 import engine.managers.SoundManager;
@@ -25,7 +25,6 @@ import java.awt.Font;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
 import java.util.List;
-import java.util.ArrayList;
 
 /**
     The Level class is the abstract base for playable levels.
@@ -48,16 +47,12 @@ public abstract class Level {
     // Screen-shake presets (intensity in pixels, duration in frames)
     private static final float SHAKE_DEATH_INTENSITY = 4f;
     private static final int   SHAKE_DEATH_DURATION  = 15;
-    private static final float SHAKE_HIT_ENEMY_INTENSITY = 2f;
-    private static final int   SHAKE_HIT_ENEMY_DURATION  = 8;
     private static final float SHAKE_PLAYER_HURT_INTENSITY = 3f;
     private static final int   SHAKE_PLAYER_HURT_DURATION  = 10;
     private static final float SHAKE_BOSS_HIT_INTENSITY = 5f;
     private static final int   SHAKE_BOSS_HIT_DURATION  = 15;
 
     // Knockback strengths (pixels of horizontal nudge per hit)
-    private static final float KNOCK_ENEMY_FROM_PLAYER = 10f;
-    private static final float KNOCK_PLAYER_FROM_ENEMY = 12f;
     private static final float KNOCK_BOSS_FROM_PLAYER  = 5f;
     private static final float KNOCK_PLAYER_FROM_BOSS  = 18f;
 
@@ -79,7 +74,7 @@ public abstract class Level {
     // === World content ===
     protected List<Rectangle> platforms;
     protected List<Collectible> collectibles;
-    protected List<Enemy> enemies;
+    protected EnemyWave wave;
     protected Boss boss;
     protected int levelWidth;
 
@@ -131,12 +126,12 @@ public abstract class Level {
         player.setLevelWidth(levelWidth);
         camera.setLevelWidth(levelWidth);
 
-        this.enemies = new ArrayList<>();
+        this.wave = new EnemyWave(platforms);
         for (float[] pos : loader.getPinkStarSpawns()) {
-            enemies.add(new PinkStar(pos[0], pos[1], player, platforms));
+            wave.add(new PinkStar(pos[0], pos[1], player, platforms));
         }
         for (float[] pos : loader.getCrabbySpawns()) {
-            enemies.add(new Crabby(pos[0], pos[1], player));
+            wave.add(new Crabby(pos[0], pos[1], player));
         }
 
         float[] bossPos = loader.getBossSpawn();
@@ -223,13 +218,14 @@ public abstract class Level {
 
         updateCollectibles();
         checkCollectiblePickups();
-        updateEnemies();
+        wave.update();
         if (boss != null && !boss.isDead()) {
             boss.applyGravity();
             applyEnemyPlatformCollision(boss);
             boss.update();
         }
-        checkCombat();
+        wave.handleCombat(player, camera, effects);
+        checkBossCombat();
         camera.update(player);
         background.update();
         effects.update();
@@ -239,16 +235,6 @@ public abstract class Level {
     private void updateCollectibles() {
         for (Collectible c : collectibles) {
             if (!c.isCollected()) c.update();
-        }
-    }
-
-    private void updateEnemies() {
-        for (Enemy e : enemies) {
-            if (!e.isDead() || e.isDying()) {
-                e.applyGravity();
-                applyEnemyPlatformCollision(e);
-                e.update();
-            }
         }
     }
 
@@ -288,69 +274,33 @@ public abstract class Level {
         }
     }
 
-    private void checkCombat() {
+    private void checkBossCombat() {
         if (player.isDying() || player.isDead()) return;
+        if (boss == null || boss.isDead() || boss.isDying()) return;
 
-        GameStateManager gsm = GameStateManager.getInstance();
-        GameConfig cfg = GameConfig.getInstance();
         java.awt.geom.Rectangle2D.Double playerBounds = player.getBoundingRectangle();
         java.awt.geom.Rectangle2D.Double attackBounds = player.getAttackBounds();
 
-        for (Enemy e : enemies) {
-            if (e.isDead() || e.isDying()) continue;
-
-            if (attackBounds != null && !player.hasHitEnemy(e) && attackBounds.intersects(e.getBoundingRectangle())) {
-                e.takeDamage(1);
-                player.markEnemyHit(e);
-                // Push the enemy away from the player (sign = direction).
-                float knockDir = e.getX() > player.getX() ? 1 : -1;
-                e.knockback(knockDir * KNOCK_ENEMY_FROM_PLAYER);
-                camera.shake(SHAKE_HIT_ENEMY_INTENSITY, SHAKE_HIT_ENEMY_DURATION);
-                SoundManager.getInstance().playRandomVariation("slime", 10);
-                if (e.isDead() || e.isDying()) {
-                    int score = 0;
-                    if (e instanceof PinkStar) {
-                        score = cfg.getInt("score.pinkStar", 75);
-                    } else if (e instanceof Crabby) {
-                        score = cfg.getInt("score.crabby", 100);
-                    }
-                    gsm.addScore(score);
-                    effects.spawnScorePopup(e.getX(), e.getY() - 10, score);
-                    SoundManager.getInstance().playClip("coin", false);
-                }
-            }
-
-            if (!e.isDead() && e.canDealDamage() && playerBounds.intersects(e.getBoundingRectangle())) {
-                player.takeDamage(e.getDamage());
-                float knockDir = player.getX() > e.getX() ? 1 : -1;
-                player.knockback(knockDir * KNOCK_PLAYER_FROM_ENEMY);
-                camera.shake(SHAKE_PLAYER_HURT_INTENSITY, SHAKE_PLAYER_HURT_DURATION);
-                SoundManager.getInstance().playRandomVariation("hurt", 2);
+        if (attackBounds != null && !player.hasHitEnemy(boss) && attackBounds.intersects(boss.getBoundingRectangle())) {
+            boss.takeDamage(1);
+            player.markEnemyHit(boss);
+            // Boss is heavy — smaller knockback than a regular enemy.
+            float knockDir = boss.getX() > player.getX() ? 1 : -1;
+            boss.knockback(knockDir * KNOCK_BOSS_FROM_PLAYER);
+            camera.shake(SHAKE_PLAYER_HURT_INTENSITY, SHAKE_PLAYER_HURT_DURATION);
+            SoundManager.getInstance().playRandomVariation("slime", 10);
+            if (boss.isDead() || boss.isDying()) {
+                onBossDefeated();
+                SoundManager.getInstance().playClip("coin", false);
             }
         }
-
-        if (boss != null && !boss.isDead() && !boss.isDying()) {
-            if (attackBounds != null && !player.hasHitEnemy(boss) && attackBounds.intersects(boss.getBoundingRectangle())) {
-                boss.takeDamage(1);
-                player.markEnemyHit(boss);
-                // Boss is heavy — smaller knockback than a regular enemy.
-                float knockDir = boss.getX() > player.getX() ? 1 : -1;
-                boss.knockback(knockDir * KNOCK_BOSS_FROM_PLAYER);
-                camera.shake(SHAKE_PLAYER_HURT_INTENSITY, SHAKE_PLAYER_HURT_DURATION);
-                SoundManager.getInstance().playRandomVariation("slime", 10);
-                if (boss.isDead() || boss.isDying()) {
-                    onBossDefeated();
-                    SoundManager.getInstance().playClip("coin", false);
-                }
-            }
-            if (!boss.isDead() && boss.canDealDamage() && playerBounds.intersects(boss.getBoundingRectangle())) {
-                player.takeDamage(boss.getDamage());
-                // Boss hits the player hard — bigger knockback and a heavier shake.
-                float knockDir = player.getX() > boss.getX() ? 1 : -1;
-                player.knockback(knockDir * KNOCK_PLAYER_FROM_BOSS);
-                camera.shake(SHAKE_BOSS_HIT_INTENSITY, SHAKE_BOSS_HIT_DURATION);
-                SoundManager.getInstance().playRandomVariation("hurt", 2);
-            }
+        if (!boss.isDead() && boss.canDealDamage() && playerBounds.intersects(boss.getBoundingRectangle())) {
+            player.takeDamage(boss.getDamage());
+            // Boss hits the player hard — bigger knockback and a heavier shake.
+            float knockDir = player.getX() > boss.getX() ? 1 : -1;
+            player.knockback(knockDir * KNOCK_PLAYER_FROM_BOSS);
+            camera.shake(SHAKE_BOSS_HIT_INTENSITY, SHAKE_BOSS_HIT_DURATION);
+            SoundManager.getInstance().playRandomVariation("hurt", 2);
         }
     }
 
@@ -463,21 +413,13 @@ public abstract class Level {
                 c.draw(g);
             }
         }
-        for (Enemy e : enemies) {
-            if (!e.isDead() || e.isDying()) {
-                e.draw(g);
-            }
-        }
+        wave.draw(g);
         if (boss != null && (!boss.isDead() || boss.isDying())) {
             boss.draw(g);
         }
         player.draw(g);
 
-        for (Enemy e : enemies) {
-            if (!e.isDead() && !e.isDying()) {
-                e.drawEffect(g);
-            }
-        }
+        wave.drawEffects(g);
         if (boss != null && !boss.isDead() && !boss.isDying()) {
             boss.drawEffect(g);
         }
