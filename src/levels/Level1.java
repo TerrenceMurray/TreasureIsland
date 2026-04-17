@@ -27,6 +27,7 @@ public class Level1 extends Level {
         GameConfig cfg = GameConfig.getInstance();
         pirateTerrain = new PirateTerrainRenderer(cfg.getInt("level1.platformLift", 2));
         groundOffset = cfg.getInt("level1.groundOffset", -2);
+        surface = "wood";  // pirate ship deck → wood footsteps/landings
 
         // Decorative flags placed directly on the terrain.
         // Entries are { worldX, worldY, spriteIndex }.

@@ -2,6 +2,7 @@ package entities;
 
 import interfaces.Attackable;
 import engine.managers.GameConfig;
+import engine.managers.SoundManager;
 import rendering.AnimatedSprite;
 import java.awt.Graphics2D;
 import java.awt.geom.Rectangle2D;
@@ -244,6 +245,9 @@ public class Player extends GameEntity implements Attackable {
 
     public boolean isInAir() { return inAir; }
 
+    /** Returns true while a horizontal movement key is held. */
+    public boolean isMoving() { return left || right; }
+
     /**
         Sets whether the player is airborne. When the player
         first leaves the ground (e.g. walking off a ledge)
@@ -377,6 +381,7 @@ public class Player extends GameEntity implements Attackable {
             attacking = true;
             attackTick = 0;
             hitEnemies.clear();
+            SoundManager.getInstance().playRandomVariation("swing", 3);
         }
     }
 

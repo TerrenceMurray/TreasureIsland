@@ -13,6 +13,7 @@ import engine.Camera;
 import engine.managers.GameConfig;
 import engine.GamePanel;
 import engine.managers.GameStateManager;
+import engine.managers.SoundManager;
 import engine.LevelLoader;
 import rendering.background.ScrollingBackground;
 import rendering.terrain.TerrainRenderer;
@@ -99,6 +100,11 @@ public abstract class Level {
     // rendered terrain surface (levels tweak this via groundOffset).
     protected int groundOffset = 0;
     private boolean playerDeathShakeDone;
+
+    /** Surface label used to pick footstep and landing sounds. */
+    protected String surface = "grass";
+    private int stepTimer;
+    private static final int STEP_PERIOD = 18;  // frames between step sounds while running
 
     /**
         Creates a new Level, loading the layout from the
@@ -197,10 +203,22 @@ public abstract class Level {
 
         applyPlatformCollisions(prevY);
 
-        // Dust on landing
+        // Dust + thud on landing
         if (wasInAirBefore && !player.isInAir()) {
             effects.spawnDust(player.getX() + player.getWidth() / 2,
                 player.getY() + player.getHeight(), "Fall");
+            SoundManager.getInstance().playRandomVariation("land_" + surface, 5);
+        }
+
+        // Footsteps while moving on the ground
+        if (player.isMoving() && !player.isInAir()) {
+            stepTimer++;
+            if (stepTimer >= STEP_PERIOD) {
+                SoundManager.getInstance().playRandomVariation("footstep_" + surface, 5);
+                stepTimer = 0;
+            }
+        } else {
+            stepTimer = 0;
         }
 
         updateCollectibles();
@@ -288,6 +306,7 @@ public abstract class Level {
                 float knockDir = e.getX() > player.getX() ? 1 : -1;
                 e.knockback(knockDir * KNOCK_ENEMY_FROM_PLAYER);
                 camera.shake(SHAKE_HIT_ENEMY_INTENSITY, SHAKE_HIT_ENEMY_DURATION);
+                SoundManager.getInstance().playRandomVariation("slime", 10);
                 if (e.isDead() || e.isDying()) {
                     int score = 0;
                     if (e instanceof PinkStar) {
@@ -297,6 +316,7 @@ public abstract class Level {
                     }
                     gsm.addScore(score);
                     effects.spawnScorePopup(e.getX(), e.getY() - 10, score);
+                    SoundManager.getInstance().playClip("coin", false);
                 }
             }
 
@@ -305,6 +325,7 @@ public abstract class Level {
                 float knockDir = player.getX() > e.getX() ? 1 : -1;
                 player.knockback(knockDir * KNOCK_PLAYER_FROM_ENEMY);
                 camera.shake(SHAKE_PLAYER_HURT_INTENSITY, SHAKE_PLAYER_HURT_DURATION);
+                SoundManager.getInstance().playRandomVariation("hurt", 2);
             }
         }
 
@@ -316,8 +337,10 @@ public abstract class Level {
                 float knockDir = boss.getX() > player.getX() ? 1 : -1;
                 boss.knockback(knockDir * KNOCK_BOSS_FROM_PLAYER);
                 camera.shake(SHAKE_PLAYER_HURT_INTENSITY, SHAKE_PLAYER_HURT_DURATION);
+                SoundManager.getInstance().playRandomVariation("slime", 10);
                 if (boss.isDead() || boss.isDying()) {
                     onBossDefeated();
+                    SoundManager.getInstance().playClip("coin", false);
                 }
             }
             if (!boss.isDead() && boss.canDealDamage() && playerBounds.intersects(boss.getBoundingRectangle())) {
@@ -326,6 +349,7 @@ public abstract class Level {
                 float knockDir = player.getX() > boss.getX() ? 1 : -1;
                 player.knockback(knockDir * KNOCK_PLAYER_FROM_BOSS);
                 camera.shake(SHAKE_BOSS_HIT_INTENSITY, SHAKE_BOSS_HIT_DURATION);
+                SoundManager.getInstance().playRandomVariation("hurt", 2);
             }
         }
     }
@@ -349,10 +373,12 @@ public abstract class Level {
                     gsm.addScore(pts);
                     effects.spawnDiamondEffect(c.getX(), c.getY());
                     effects.spawnScorePopup(c.getX(), c.getY() - 10, pts);
+                    SoundManager.getInstance().playClip("diamond", false);
                 } else if (c instanceof HealthPotion) {
                     player.heal();
                     effects.spawnPotionEffect(c.getX(), c.getY());
                     effects.spawnTextPopup(c.getX(), c.getY() - 10, "+1 HP", Color.GREEN);
+                    SoundManager.getInstance().playClip("bubble", false);
                 } else if (c instanceof TreasureChest) {
                     int pts = ((TreasureChest) c).getPoints();
                     gsm.addScore(pts);

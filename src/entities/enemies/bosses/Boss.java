@@ -3,6 +3,7 @@ package entities.enemies.bosses;
 import entities.enemies.Enemy;
 import entities.Player;
 import engine.managers.ImageManager;
+import engine.managers.SoundManager;
 import rendering.AnimatedSprite;
 import java.awt.Color;
 import java.awt.Font;
@@ -147,6 +148,7 @@ public abstract class Boss extends Enemy {
             lunging = true;
             lungeTick = 0;
             attackTimer = 0;
+            SoundManager.getInstance().playRandomVariation("swing", 3);
         }
 
         sprite.setFlipped(facingRight);

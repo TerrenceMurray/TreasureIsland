@@ -2,6 +2,7 @@ package engine;
 
 import engine.managers.GameConfig;
 import engine.managers.GameStateManager;
+import engine.managers.SoundManager;
 import entities.Player;
 import levels.Level;
 import levels.Level1;
@@ -80,6 +81,54 @@ public class GamePanel extends JPanel implements Runnable, KeyListener {
         camera = new Camera(GAME_WIDTH, GAME_WIDTH);
         currentLevel = new Level1(player, camera);
         hud = new HUD(player, GAME_WIDTH, GAME_HEIGHT);
+
+        loadUiSounds();
+    }
+
+    /**
+        Loads sound clips under friendly labels. Interface sounds come
+        from the Kenney UI pack; swing and bubble come from the RPG
+        Sound Pack. Gameplay code plays them by label via SoundManager.
+    */
+    private void loadUiSounds() {
+        SoundManager sm = SoundManager.getInstance();
+        // Interface
+        sm.loadClip("confirm",       "sounds/confirm.wav");
+        sm.loadClip("pause",         "sounds/pause.wav");
+        sm.loadClip("resume",        "sounds/resume.wav");
+        sm.loadClip("levelComplete", "sounds/levelUp.wav");
+        sm.loadClip("gameOver",      "sounds/gameOver.wav");
+        sm.loadClip("victory",       "sounds/victory.wav");
+        sm.loadClip("bgMusic",       "sounds/bgMusic.wav");
+
+        // Normalise transition stings to a common level — the source
+        // clips were mastered with wildly different loudness
+        sm.setClipVolume("levelComplete", -8f);
+        sm.setClipVolume("gameOver",      -14f);
+        sm.setClipVolume("victory",       -8f);
+        // Background music sits well under the gameplay sounds
+        sm.setClipVolume("bgMusic", -20f);
+        // Gameplay
+        sm.loadClip("swing1",        "assets/RPG Sound Pack/battle/swing.wav");
+        sm.loadClip("swing2",        "assets/RPG Sound Pack/battle/swing2.wav");
+        sm.loadClip("swing3",        "assets/RPG Sound Pack/battle/swing3.wav");
+        sm.loadClip("bubble",        "assets/RPG Sound Pack/inventory/bubble.wav");
+        sm.loadClip("diamond",       "sounds/diamond.wav");
+        sm.setClipVolume("diamond", -10f);
+        sm.loadClip("coin",          "assets/RPG Sound Pack/inventory/coin.wav");
+        sm.loadClip("hurt1",         "assets/RPG Sound Pack/inventory/cloth.wav");
+        sm.loadClip("hurt2",         "assets/RPG Sound Pack/inventory/cloth-heavy.wav");
+        for (int i = 1; i <= 10; i++) {
+            sm.loadClip("slime" + i, "assets/RPG Sound Pack/NPC/slime/slime" + i + ".wav");
+        }
+        // Footsteps and landings — 5 variations per surface so consecutive
+        // steps don't sound identical
+        for (int i = 1; i <= 5; i++) {
+            sm.loadClip("footstep_wood" + i,  "sounds/footstep_wood" + i + ".wav");
+            sm.loadClip("footstep_grass" + i, "sounds/footstep_grass" + i + ".wav");
+            sm.loadClip("land_wood" + i,      "sounds/land_wood" + i + ".wav");
+            sm.loadClip("land_grass" + i,     "sounds/land_grass" + i + ".wav");
+        }
     }
 
     /**
@@ -159,6 +208,8 @@ public class GamePanel extends JPanel implements Runnable, KeyListener {
 
             if (player.isDead()) {
                 GameStateManager.getInstance().setState("GAME_OVER");
+                SoundManager.getInstance().stopClip("bgMusic");
+                SoundManager.getInstance().playClip("gameOver", false);
             } else if (currentLevel.isComplete()) {
                 // Level 2 is the final level — completing it goes to VICTORY,
                 // otherwise show the LEVEL_COMPLETE banner and transition.
@@ -166,8 +217,11 @@ public class GamePanel extends JPanel implements Runnable, KeyListener {
                     GameStateManager.getInstance().addScore(
                         CFG.getInt("score.levelComplete2", 500));
                     GameStateManager.getInstance().setState("VICTORY");
+                    SoundManager.getInstance().stopClip("bgMusic");
+                    SoundManager.getInstance().playClip("victory", false);
                 } else {
                     GameStateManager.getInstance().setState("LEVEL_COMPLETE");
+                    SoundManager.getInstance().playClip("levelComplete", false);
                     transitionTimer = 0;
                 }
             }
@@ -234,6 +288,8 @@ public class GamePanel extends JPanel implements Runnable, KeyListener {
 
         if (state.equals("MENU")) {
             if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+                SoundManager.getInstance().playClip("confirm", false);
+                SoundManager.getInstance().playClip("bgMusic", true);
                 GameStateManager.getInstance().setState("PLAYING");
             } else if (e.getKeyCode() == KeyEvent.VK_Q) {
                 System.exit(0);
@@ -252,9 +308,11 @@ public class GamePanel extends JPanel implements Runnable, KeyListener {
             if (state.equals("PLAYING")) {
                 pauseGame();
                 GameStateManager.getInstance().setState("PAUSED");
+                SoundManager.getInstance().playClip("pause", false);
             } else if (state.equals("PAUSED")) {
                 pauseGame();
                 GameStateManager.getInstance().setState("PLAYING");
+                SoundManager.getInstance().playClip("resume", false);
             }
             return;
         }

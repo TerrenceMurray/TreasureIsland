@@ -1,6 +1,7 @@
 package entities.enemies;
 
 import entities.Player;
+import engine.managers.SoundManager;
 import rendering.AnimatedSprite;
 import java.awt.Graphics2D;
 
@@ -142,6 +143,7 @@ public class Crabby extends Enemy {
                 // Close enough — start lunge
                 lunging = true;
                 lungeTick = 0;
+                SoundManager.getInstance().playRandomVariation("swing", 3);
             } else if (dist > width) {
                 // Approach the player
                 x += (dx > 0 ? approachSpeed : -approachSpeed);

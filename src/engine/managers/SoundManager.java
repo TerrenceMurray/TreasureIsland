@@ -3,8 +3,10 @@ package engine.managers;
 import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.Clip;
+import javax.sound.sampled.FloatControl;
 import java.io.File;
 import java.util.HashMap;
+import java.util.Random;
 
 /**
     The SoundManager class is a singleton that loads and plays
@@ -15,10 +17,12 @@ import java.util.HashMap;
 public class SoundManager {
 
     private HashMap<String, Clip> clips;
+    private Random random;
     private static SoundManager instance;
 
     private SoundManager() {
         clips = new HashMap<String, Clip>();
+        random = new Random();
     }
 
     /**
@@ -72,11 +76,14 @@ public class SoundManager {
     /**
         Plays the clip stored under the given title from the
         beginning. If looping is true, the clip plays continuously
-        until stopped.
+        until stopped. Calling this while the clip is already
+        running first stops it so rapid successive triggers restart
+        reliably; Clip.start() on its own can be flaky in that case.
     */
     public void playClip(String title, boolean looping) {
         Clip clip = getClip(title);
         if (clip != null) {
+            if (clip.isRunning()) clip.stop();
             clip.setFramePosition(0);
             if (looping) {
                 clip.loop(Clip.LOOP_CONTINUOUSLY);
@@ -93,6 +100,36 @@ public class SoundManager {
         Clip clip = getClip(title);
         if (clip != null) {
             clip.stop();
+        }
+    }
+
+    /**
+        Plays one of a set of numbered variations picked at random.
+        For example, playRandomVariation("slime", 10) picks one of
+        slime1..slime10. Used to avoid a single identical sound
+        repeating on every hit.
+    */
+    public void playRandomVariation(String prefix, int count) {
+        if (count <= 0) return;
+        int pick = 1 + random.nextInt(count);
+        playClip(prefix + pick, false);
+    }
+
+    /**
+        Sets the clip's playback volume in decibels. 0 dB is the
+        clip's natural level; negative values reduce it (-20 dB is
+        a soft background level). Silently ignored if the clip does
+        not exist or does not support a master gain control.
+    */
+    public void setClipVolume(String title, float gainDb) {
+        Clip clip = getClip(title);
+        if (clip == null) return;
+        try {
+            FloatControl gain = (FloatControl) clip.getControl(FloatControl.Type.MASTER_GAIN);
+            float clamped = Math.max(gain.getMinimum(), Math.min(gain.getMaximum(), gainDb));
+            gain.setValue(clamped);
+        } catch (IllegalArgumentException ignored) {
+            // Clip does not support MASTER_GAIN
         }
     }
 }
