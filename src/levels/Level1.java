@@ -9,8 +9,14 @@ import engine.GameStateManager;
 import rendering.PirateTerrainRenderer;
 import java.awt.Graphics2D;
 
+/**
+    The Level1 class is the pirate-ship level. It uses the
+    pirate terrain renderer, places deck flags, and spawns
+    the Fierce Tooth boss.
+*/
 public class Level1 extends Level {
 
+    // === Level-specific renderer ===
     private PirateTerrainRenderer pirateTerrain;
 
     public Level1(Player player, Camera camera) {
@@ -22,7 +28,8 @@ public class Level1 extends Level {
         pirateTerrain = new PirateTerrainRenderer(cfg.getInt("level1.platformLift", 2));
         groundOffset = cfg.getInt("level1.groundOffset", -2);
 
-        // Flags on solid terrain
+        // Decorative flags placed directly on the terrain.
+        // Entries are { worldX, worldY, spriteIndex }.
         decor.setPlacements(new int[][] {
             {192, 352, 0},    // Upper deck
             {2816, 352, 0},   // Boss arena

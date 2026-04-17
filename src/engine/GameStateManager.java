@@ -1,5 +1,10 @@
 package engine;
 
+/**
+    The GameStateManager class is a singleton that tracks the
+    current game state (MENU, PLAYING, PAUSED, LEVEL_COMPLETE,
+    GAME_OVER, VICTORY) and the player's score across levels.
+*/
 public class GameStateManager {
 
     private static GameStateManager instance;
@@ -12,6 +17,10 @@ public class GameStateManager {
         score = 0;
     }
 
+    /**
+        Returns the shared GameStateManager instance, creating it
+        on first use.
+    */
     public static GameStateManager getInstance() {
         if (instance == null) {
             instance = new GameStateManager();

@@ -4,33 +4,59 @@ import entities.Player;
 import rendering.AnimatedSprite;
 import java.awt.Graphics2D;
 
+/**
+    The Crabby class is a ground enemy that patrols near its
+    spawn point. When the player gets close, it pauses to
+    show an exclamation mark, then charges and lunges. It
+    returns to its spawn point if the player leaves its
+    leash range.
+*/
 public class Crabby extends Enemy {
 
+    // === Config ===
     private static final String SPRITE_BASE = "assets/Treasure Hunters/The Crusty Crew/Sprites/Crabby/";
+    private static final String DIALOGUE_BASE = "assets/Treasure Hunters/The Crusty Crew/Sprites/Dialogue/Exclamation/";
+    // Each source sprite pixel is drawn as a DRAW_SCALE×DRAW_SCALE block.
     private static final int DRAW_SCALE = 2;
+    // Empty pixels below the feet in the source frames (3 src × scale).
     private static final int FOOT_PADDING = 3 * DRAW_SCALE;
 
+    // === AI tuning (pixels / pixels per frame) ===
+    // How close the player must get (horizontally, from spawn) before aggro.
     private float detectionRange = 100f;
+    // If the player goes beyond this distance from spawn, disengage.
     private float leashRange = 180f;
+    // Patrol back to spawn at 0.5 px/frame.
     private float idleSpeed = 0.5f;
+    // Walk speed while chasing the player.
     private float approachSpeed = 1f;
+    // Speed during the forward lunge attack.
     private float lungeSpeed = 6f;
+
+    // === Attack timing (frames) ===
+    private static final int LUNGE_DURATION = 15;
+    // 1 second at 60fps between lunges.
+    private static final int LUNGE_COOLDOWN = 60;
+    // 1.5 seconds of "!!" anticipation before first lunge.
+    private static final int AGGRO_DELAY_MAX = 90;
+
+    // === State flags and timers ===
     private boolean charging;
     private boolean lunging;
     private int lungeTick;
-    private static final int LUNGE_DURATION = 15;
-    private static final int LUNGE_COOLDOWN = 60;
     private int lungeCooldownTimer;
     private int aggroDelay;
-    private static final int AGGRO_DELAY_MAX = 90;
-    private Player target;
-    private float spawnX;
     private boolean facingRight;
 
+    // === References and spawn anchor ===
+    private Player target;
+    // Remembered spawn x so the crab can patrol back when the player leaves.
+    private float spawnX;
+
+    // === Animation ===
     private AnimatedSprite sprite;
     private AnimatedSprite attackEffect;
     private AnimatedSprite exclamation;
-    private static final String DIALOGUE_BASE = "assets/Treasure Hunters/The Crusty Crew/Sprites/Dialogue/Exclamation/";
 
     public Crabby(float x, float y, Player target) {
         super(x, y, 40, 30, 5, 1);
@@ -148,19 +174,24 @@ public class Crabby extends Enemy {
     @Override
     public void draw(Graphics2D g) {
         if (isDead() && !dying) return;
+        // Source sprite is 72×32 px; scale and centre over the collision box.
         int drawW = 72 * DRAW_SCALE;
         int drawH = 32 * DRAW_SCALE;
         int drawX = (int) x - (drawW - width) / 2;
         int drawY = (int) y + height - drawH + FOOT_PADDING;
         drawWithDeathFade(g, () -> sprite.draw(g, drawX, drawY, drawW, drawH));
 
-        // Health bar above sprite (Crabby's sprite is much taller than its collision box)
+        // Health bar above sprite (Crabby's sprite is much taller than its
+        // collision box, so the default position would be inside the sprite).
+        // 6 px above the top of the drawn sprite.
         drawHealthBar(g, drawY - 6);
 
-        // Exclamation during aggro windup
+        // "!!" exclamation during aggro windup.
         if (aggroDelay > 0 && !charging && !dying) {
+            // Source icon is 14×12 px; drawn at 1.75× to read clearly without scale doubling.
             int exW = (int)(14 * 1.75f);
             int exH = (int)(12 * 1.75f);
+            // Float the icon just off the facing side of the crab, above its head.
             int exX = facingRight ? (int) x + width + 2 : (int) x - exW - 2;
             int exY = (int) y - exH;
             exclamation.draw(g, exX, exY, exW, exH);
@@ -170,9 +201,14 @@ public class Crabby extends Enemy {
     @Override
     public void drawEffect(Graphics2D g) {
         if (lunging) {
+            // Recompute the sprite's drawn footprint so we can centre the
+            // wide attack dust cloud over it.
             int drawW = 72 * DRAW_SCALE;
             int drawX = (int) x - (drawW - width) / 2;
+            // +10 lowers the dust cloud so it reads as ground-level spray
+            // rather than floating around the torso.
             int drawY = (int) y + height - 32 * DRAW_SCALE + 10;
+            // Effect sprite is 118×24 px.
             int effectW = 118 * DRAW_SCALE;
             int effectH = 24 * DRAW_SCALE;
             int effectX = drawX + (drawW - effectW) / 2;

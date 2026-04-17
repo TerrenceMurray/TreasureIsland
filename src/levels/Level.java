@@ -26,30 +26,85 @@ import java.awt.Rectangle;
 import java.util.List;
 import java.util.ArrayList;
 
+/**
+    The Level class is the abstract base for playable levels.
+    It loads the level layout, manages the player, enemies,
+    boss, collectibles, and platform collisions, and draws
+    the level scene with background, terrain, and effects.
+    Subclasses override createBoss, onBossDefeated, and
+    drawTerrain to customise each level.
+*/
 public abstract class Level {
 
+    // === Timing / tuning constants (frames; the game runs at 60 FPS) ===
+    // How long the boss death sequence plays before the level reacts.
+    private static final int BOSS_DEFEATED_DELAY = 120;   // 2 seconds
+    // How long the level-name banner stays on screen.
+    private static final int LEVEL_NAME_DURATION = 120;   // 2 seconds
+    // During the last 60 frames of the banner it fades from 1.0 to 0.0 alpha.
+    private static final int LEVEL_NAME_FADE_FRAMES = 60; // 1 second
+
+    // Screen-shake presets (intensity in pixels, duration in frames)
+    private static final float SHAKE_DEATH_INTENSITY = 4f;
+    private static final int   SHAKE_DEATH_DURATION  = 15;
+    private static final float SHAKE_HIT_ENEMY_INTENSITY = 2f;
+    private static final int   SHAKE_HIT_ENEMY_DURATION  = 8;
+    private static final float SHAKE_PLAYER_HURT_INTENSITY = 3f;
+    private static final int   SHAKE_PLAYER_HURT_DURATION  = 10;
+    private static final float SHAKE_BOSS_HIT_INTENSITY = 5f;
+    private static final int   SHAKE_BOSS_HIT_DURATION  = 15;
+
+    // Knockback strengths (pixels of horizontal nudge per hit)
+    private static final float KNOCK_ENEMY_FROM_PLAYER = 10f;
+    private static final float KNOCK_PLAYER_FROM_ENEMY = 12f;
+    private static final float KNOCK_BOSS_FROM_PLAYER  = 5f;
+    private static final float KNOCK_PLAYER_FROM_BOSS  = 18f;
+
+    // Collision tuning
+    // How far below a platform's top we still accept a "land on" contact.
+    // Generous window so fast falls don't tunnel through the top.
+    private static final int PLATFORM_LAND_SLOP = 12;
+    // Height threshold to distinguish solid blocks from thin pass-through
+    // platforms. Thin platforms (height <= 30) don't trigger head-bumps so
+    // the player can jump up through them.
+    private static final int SOLID_PLATFORM_MIN_HEIGHT = 30;
+    // Thin strip below the entity used to probe "am I still on ground?".
+    private static final int FEET_PROBE_HEIGHT = 4;
+
+    // === Core references ===
     protected Player player;
+    protected Camera camera;
+
+    // === World content ===
     protected List<Rectangle> platforms;
     protected List<Collectible> collectibles;
     protected List<Enemy> enemies;
     protected Boss boss;
-    protected Camera camera;
     protected int levelWidth;
-    protected boolean complete;
-    protected boolean bossDefeated;
-    protected int bossDefeatedTimer;
-    private static final int BOSS_DEFEATED_DELAY = 120;
+
+    // === Renderers ===
     protected ScrollingBackground background;
     protected TerrainRenderer terrain;
     protected EffectManager effects;
     protected PalmTreeRenderer palmTrees;
     protected DecorRenderer decor;
+
+    // === Level state / timers ===
+    protected boolean complete;
+    protected boolean bossDefeated;
+    protected int bossDefeatedTimer;
     protected String levelName;
     protected int levelNameTimer;
-    private static final int LEVEL_NAME_DURATION = 120;
+    // Pixel shift applied to entities so their feet line up with the
+    // rendered terrain surface (levels tweak this via groundOffset).
     protected int groundOffset = 0;
     private boolean playerDeathShakeDone;
 
+    /**
+        Creates a new Level, loading the layout from the
+        given level file and setting up the background,
+        terrain, and any enemies and boss described in it.
+    */
     public Level(Player player, Camera camera, String levelFile, String bgPath, String levelName) {
         this.player = player;
         this.camera = camera;
@@ -84,11 +139,28 @@ public abstract class Level {
         }
     }
 
+    /**
+        Creates the boss for this level at the given spawn
+        position. Subclasses return their specific boss type,
+        or null if the level has no boss.
+    */
     protected abstract Boss createBoss(float x, float y);
+
+    /**
+        Called after the boss death animation has finished.
+        By default the level is marked complete; subclasses
+        can override to do something different (e.g. spawning
+        a treasure chest).
+    */
     protected void onBossAnimationComplete() {
         complete = true;
     }
 
+    /**
+        Advances the level one frame: updates the player,
+        collectibles, enemies, boss, collisions, camera, and
+        effects.
+    */
     public void update() {
         if (complete) return;
 
@@ -112,8 +184,9 @@ public abstract class Level {
         player.update();
 
         if (player.isDying()) {
+            // One-shot death shake — triggered only on the first dying frame.
             if (!playerDeathShakeDone) {
-                camera.shake(4f, 15);
+                camera.shake(SHAKE_DEATH_INTENSITY, SHAKE_DEATH_DURATION);
                 playerDeathShakeDone = true;
             }
             camera.update(player);
@@ -168,7 +241,10 @@ public abstract class Level {
 
         for (java.awt.Rectangle plat : platforms) {
             if (eBounds.intersects(plat)) {
-                if (e.getVelocityY() >= 0 && eBottom >= plat.y && eBottom <= plat.y + 12) {
+                // Land only while falling and only if the feet are within the
+                // top "slop" band of the platform — this stops side-wall hits
+                // from being treated as landings.
+                if (e.getVelocityY() >= 0 && eBottom >= plat.y && eBottom <= plat.y + PLATFORM_LAND_SLOP) {
                     e.landOn(plat.y);
                     onPlatform = true;
                     break;
@@ -177,8 +253,10 @@ public abstract class Level {
         }
 
         if (!onPlatform && !e.isInAir()) {
+            // Probe a thin strip just below the feet to decide if the enemy
+            // has walked off an edge and should start falling.
             java.awt.Rectangle feet = new java.awt.Rectangle(
-                (int) e.getX(), (int) e.getY() + e.getHeight(), e.getWidth(), 4);
+                (int) e.getX(), (int) e.getY() + e.getHeight(), e.getWidth(), FEET_PROBE_HEIGHT);
             boolean supported = false;
             for (java.awt.Rectangle plat : platforms) {
                 if (feet.intersects(plat)) {
@@ -206,9 +284,10 @@ public abstract class Level {
             if (attackBounds != null && !player.hasHitEnemy(e) && attackBounds.intersects(e.getBoundingRectangle())) {
                 e.takeDamage(1);
                 player.markEnemyHit(e);
+                // Push the enemy away from the player (sign = direction).
                 float knockDir = e.getX() > player.getX() ? 1 : -1;
-                e.knockback(knockDir * 10);
-                camera.shake(2f, 8);
+                e.knockback(knockDir * KNOCK_ENEMY_FROM_PLAYER);
+                camera.shake(SHAKE_HIT_ENEMY_INTENSITY, SHAKE_HIT_ENEMY_DURATION);
                 if (e.isDead() || e.isDying()) {
                     int score = 0;
                     if (e instanceof PinkStar) {
@@ -224,8 +303,8 @@ public abstract class Level {
             if (!e.isDead() && e.canDealDamage() && playerBounds.intersects(e.getBoundingRectangle())) {
                 player.takeDamage(e.getDamage());
                 float knockDir = player.getX() > e.getX() ? 1 : -1;
-                player.knockback(knockDir * 12);
-                camera.shake(3f, 10);
+                player.knockback(knockDir * KNOCK_PLAYER_FROM_ENEMY);
+                camera.shake(SHAKE_PLAYER_HURT_INTENSITY, SHAKE_PLAYER_HURT_DURATION);
             }
         }
 
@@ -233,22 +312,29 @@ public abstract class Level {
             if (attackBounds != null && !player.hasHitEnemy(boss) && attackBounds.intersects(boss.getBoundingRectangle())) {
                 boss.takeDamage(1);
                 player.markEnemyHit(boss);
+                // Boss is heavy — smaller knockback than a regular enemy.
                 float knockDir = boss.getX() > player.getX() ? 1 : -1;
-                boss.knockback(knockDir * 5);
-                camera.shake(3f, 10);
+                boss.knockback(knockDir * KNOCK_BOSS_FROM_PLAYER);
+                camera.shake(SHAKE_PLAYER_HURT_INTENSITY, SHAKE_PLAYER_HURT_DURATION);
                 if (boss.isDead() || boss.isDying()) {
                     onBossDefeated();
                 }
             }
             if (!boss.isDead() && boss.canDealDamage() && playerBounds.intersects(boss.getBoundingRectangle())) {
                 player.takeDamage(boss.getDamage());
+                // Boss hits the player hard — bigger knockback and a heavier shake.
                 float knockDir = player.getX() > boss.getX() ? 1 : -1;
-                player.knockback(knockDir * 18);
-                camera.shake(5f, 15);
+                player.knockback(knockDir * KNOCK_PLAYER_FROM_BOSS);
+                camera.shake(SHAKE_BOSS_HIT_INTENSITY, SHAKE_BOSS_HIT_DURATION);
             }
         }
     }
 
+    /**
+        Called once when the boss is first defeated.
+        Subclasses add the score reward and start any boss
+        defeat sequence.
+    */
     protected abstract void onBossDefeated();
 
     private void checkCollectiblePickups() {
@@ -285,13 +371,22 @@ public abstract class Level {
 
         for (Rectangle plat : platforms) {
             if (playerBounds.intersects(plat)) {
+                // Land on top of a platform: only when falling, and only when
+                // the feet crossed the top edge this frame (prevBottom above,
+                // playerBottom below). This prevents side collisions from
+                // snapping the player onto the surface.
                 if (player.getVelocityY() >= 0 && prevBottom <= plat.y + 10 && playerBottom >= plat.y) {
                     player.landOn(plat.y);
                     onPlatform = true;
                     break;
                 }
-                if (plat.height > 30) {
+                // Only solid blocks produce head-bumps. Thin (<=30px) platforms
+                // are treated as pass-through ledges so the player can jump up
+                // through them from below.
+                if (plat.height > SOLID_PLATFORM_MIN_HEIGHT) {
                     float platBottom = plat.y + plat.height;
+                    // Rising into the underside: previous frame's head was
+                    // below platBottom, current frame it's above — bump.
                     if (player.getVelocityY() < 0 && prevY >= platBottom - 2 && player.getY() < platBottom) {
                         player.hitHead(platBottom);
                     }
@@ -300,7 +395,9 @@ public abstract class Level {
         }
 
         if (!onPlatform && !player.isInAir()) {
-            Rectangle feet = new Rectangle((int) player.getX(), (int) player.getY() + player.getHeight(), player.getWidth(), 4);
+            // Thin strip just below the feet — if nothing supports it, the
+            // player has walked off an edge and should start falling.
+            Rectangle feet = new Rectangle((int) player.getX(), (int) player.getY() + player.getHeight(), player.getWidth(), FEET_PROBE_HEIGHT);
             boolean supported = false;
             for (Rectangle plat : platforms) {
                 if (feet.intersects(plat)) {
@@ -314,6 +411,11 @@ public abstract class Level {
         }
     }
 
+    /**
+        Draws the whole level scene: background, terrain,
+        palm trees, collectibles, enemies, boss, player,
+        effects, and the level-name overlay.
+    */
     public void draw(Graphics2D g) {
         float shakeY = camera.getShakeY();
         background.draw(g, camera.getX(), levelWidth);
@@ -365,7 +467,11 @@ public abstract class Level {
 
         // Level name overlay
         if (levelNameTimer > 0) {
-            float alpha = levelNameTimer > 60 ? 1f : levelNameTimer / 60f;
+            // Full opacity for the first half, then linear fade-out across
+            // the final LEVEL_NAME_FADE_FRAMES frames.
+            float alpha = levelNameTimer > LEVEL_NAME_FADE_FRAMES
+                ? 1f
+                : levelNameTimer / (float) LEVEL_NAME_FADE_FRAMES;
             java.awt.Composite original = g.getComposite();
             g.setComposite(java.awt.AlphaComposite.getInstance(java.awt.AlphaComposite.SRC_OVER, alpha));
             g.setFont(new Font("Monospaced", Font.BOLD, 36));
@@ -388,6 +494,10 @@ public abstract class Level {
         }
     }
 
+    /**
+        Draws the terrain for this level. Subclasses can
+        override this to use a different terrain renderer.
+    */
     protected void drawTerrain(Graphics2D g) {
         terrain.draw(g, platforms);
     }

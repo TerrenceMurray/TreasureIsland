@@ -8,16 +8,28 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 
-// Centralizes image loading and processing (Week 3 pattern).
+/**
+    The ImageManager class centralizes image loading and simple
+    image processing. Following the Week 3 pattern, all methods
+    are static utilities so the rest of the code doesn't need to
+    manage ImageIO or ImageIcon directly.
+*/
 public class ImageManager {
 
     public ImageManager() {
     }
 
+    /**
+        Loads an Image from the given file path using ImageIcon.
+    */
     public static Image loadImage(String fileName) {
         return new ImageIcon(fileName).getImage();
     }
 
+    /**
+        Loads a BufferedImage from the given file path. Returns
+        null if the file cannot be read.
+    */
     public static BufferedImage loadBufferedImage(String fileName) {
         BufferedImage bi = null;
         File file = new File(fileName);
@@ -29,7 +41,10 @@ public class ImageManager {
         return bi;
     }
 
-    // Make a copy of the BufferedImage src.
+    /**
+        Returns an independent copy of the given BufferedImage,
+        or null if src is null.
+    */
     public static BufferedImage copyImage(BufferedImage src) {
         if (src == null) return null;
 

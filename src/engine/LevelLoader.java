@@ -10,15 +10,31 @@ import java.io.IOException;
 import java.util.List;
 import java.util.ArrayList;
 
+/**
+    The LevelLoader class parses a level description file into
+    platforms, collectibles, and enemy spawn points. The file uses
+    a simple section-based format (e.g. [platforms], [diamonds])
+    with comma-separated values on each line.
+*/
 public class LevelLoader {
 
+    // === World geometry ===
+    // Default level width (one screen) if the file doesn't set one.
     private int levelWidth = 960;
     private List<Rectangle> platforms = new ArrayList<>();
+
+    // === Pickups ===
     private List<Collectible> collectibles = new ArrayList<>();
+
+    // === Enemy / boss spawn points (x, y pairs) ===
     private List<float[]> pinkStarSpawns = new ArrayList<>();
     private List<float[]> crabbySpawns = new ArrayList<>();
     private float[] bossSpawn = null;
 
+    /**
+        Creates a new LevelLoader and immediately parses the given
+        level file.
+    */
     public LevelLoader(String filePath) {
         load(filePath);
     }
