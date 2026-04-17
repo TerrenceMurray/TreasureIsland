@@ -154,17 +154,8 @@ public class Crabby extends Enemy {
         int drawY = (int) y + height - drawH + FOOT_PADDING;
         drawWithDeathFade(g, () -> sprite.draw(g, drawX, drawY, drawW, drawH));
 
-        // Health bar above sprite
-        if (health < maxHealth && !dying) {
-            int barW = width;
-            int barH = 4;
-            int barX = (int) x;
-            int barY = drawY - 6;
-            g.setColor(java.awt.Color.DARK_GRAY);
-            g.fillRect(barX, barY, barW, barH);
-            g.setColor(java.awt.Color.RED);
-            g.fillRect(barX, barY, (int)(barW * ((float) health / maxHealth)), barH);
-        }
+        // Health bar above sprite (Crabby's sprite is much taller than its collision box)
+        drawHealthBar(g, drawY - 6);
 
         // Exclamation during aggro windup
         if (aggroDelay > 0 && !charging && !dying) {

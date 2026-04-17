@@ -4,7 +4,7 @@ import interfaces.Attackable;
 import engine.GameConfig;
 import rendering.AnimatedSprite;
 import java.awt.Graphics2D;
-import java.awt.Rectangle;
+import java.awt.geom.Rectangle2D;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -29,6 +29,10 @@ public class Player extends GameEntity implements Attackable {
     private boolean left, right, jumping;
     private boolean facingRight = true;
     private boolean inAir;
+    // Kinematic airborne state: y(t) = airStartY + airStartVel*t + ½·GRAVITY·t²
+    private int airTime;
+    private float airStartY;
+    private float airStartVel;
     private boolean attacking;
     private int attackTick;
     private int attackCooldownTimer;
@@ -55,6 +59,9 @@ public class Player extends GameEntity implements Attackable {
             CFG.getInt("player.height", 50));
         this.health = MAX_HEALTH;
         this.inAir = true;
+        this.airStartY = y;
+        this.airTime = 0;
+        this.airStartVel = 0;
         this.levelWidth = CFG.getInt("game.width", 960);
         initSprite();
     }
@@ -108,12 +115,18 @@ public class Player extends GameEntity implements Attackable {
         if (left) facingRight = false;
 
         if (jumping && !inAir) {
-            velocityY = JUMP_FORCE;
             inAir = true;
+            airStartY = y;
+            airTime = 0;
+            airStartVel = JUMP_FORCE;  // JUMP_FORCE is negative (upward in Java coords)
         }
 
-        velocityY += GRAVITY;
-        y += velocityY;
+        if (inAir) {
+            airTime++;
+            // s = ut + ½at² (Java y grows downward, JUMP_FORCE is negative)
+            y = airStartY + airStartVel * airTime + 0.5f * GRAVITY * airTime * airTime;
+            velocityY = airStartVel + GRAVITY * airTime;
+        }
 
         if (attacking) {
             attackTick++;
@@ -164,10 +177,22 @@ public class Player extends GameEntity implements Attackable {
     public void hitHead(float ceilingBottom) {
         y = ceilingBottom;
         velocityY = 0;
+        // Restart the kinematic fall from here with zero vertical velocity
+        airStartY = y;
+        airTime = 0;
+        airStartVel = 0;
     }
 
     public boolean isInAir() { return inAir; }
-    public void setInAir(boolean inAir) { this.inAir = inAir; }
+    public void setInAir(boolean newInAir) {
+        if (newInAir && !inAir) {
+            // Walking off a ledge: start kinematic fall from rest
+            airStartY = y;
+            airTime = 0;
+            airStartVel = 0;
+        }
+        this.inAir = newInAir;
+    }
 
     @Override
     public void draw(Graphics2D g) {
@@ -205,14 +230,14 @@ public class Player extends GameEntity implements Attackable {
         }
     }
 
-    public Rectangle getAttackBounds() {
+    public Rectangle2D.Double getAttackBounds() {
         if (!attacking) return null;
         if (attackTick < 6 || attackTick > 12) return null;
         // Position from sprite center, not narrow hitbox edge
         int spriteCenterX = (int) x + width / 2;
         int attackX = facingRight ? spriteCenterX + 10 : spriteCenterX - ATTACK_WIDTH - 10;
         int attackY = (int) y + (height - ATTACK_HEIGHT) / 2;
-        return new Rectangle(attackX, attackY, ATTACK_WIDTH, ATTACK_HEIGHT);
+        return new Rectangle2D.Double(attackX, attackY, ATTACK_WIDTH, ATTACK_HEIGHT);
     }
 
     public boolean hasHitEnemy(Object enemy) {
@@ -267,5 +292,4 @@ public class Player extends GameEntity implements Attackable {
     public int getHealth() { return health; }
     public void setHealth(int health) { this.health = Math.min(health, MAX_HEALTH); }
     public int getMaxHealth() { return MAX_HEALTH; }
-    public boolean isAttacking() { return attacking; }
 }

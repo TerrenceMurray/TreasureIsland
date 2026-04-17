@@ -48,6 +48,7 @@ public abstract class Level {
     protected int levelNameTimer;
     private static final int LEVEL_NAME_DURATION = 120;
     protected int groundOffset = 0;
+    private boolean playerDeathShakeDone;
 
     public Level(Player player, Camera camera, String levelFile, String bgPath, String levelName) {
         this.player = player;
@@ -111,7 +112,10 @@ public abstract class Level {
         player.update();
 
         if (player.isDying()) {
-            camera.shake(4f, 15);
+            if (!playerDeathShakeDone) {
+                camera.shake(4f, 15);
+                playerDeathShakeDone = true;
+            }
             camera.update(player);
             background.update();
             effects.update();
@@ -194,7 +198,7 @@ public abstract class Level {
         GameStateManager gsm = GameStateManager.getInstance();
         GameConfig cfg = GameConfig.getInstance();
         java.awt.geom.Rectangle2D.Double playerBounds = player.getBoundingRectangle();
-        Rectangle attackBounds = player.getAttackBounds();
+        java.awt.geom.Rectangle2D.Double attackBounds = player.getAttackBounds();
 
         for (Enemy e : enemies) {
             if (e.isDead() || e.isDying()) continue;

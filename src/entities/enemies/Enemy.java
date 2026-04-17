@@ -53,7 +53,7 @@ public abstract class Enemy extends GameEntity implements Attackable {
         return dying && deathTimer > DEATH_GROUND_DURATION;
     }
 
-    public float getDeathAlpha() {
+    private float getDeathAlpha() {
         if (!dying) return 1f;
         if (deathTimer > DEATH_GROUND_DURATION) return 1f;
         return (float) deathTimer / DEATH_GROUND_DURATION;
@@ -110,11 +110,14 @@ public abstract class Enemy extends GameEntity implements Attackable {
     }
 
     protected void drawHealthBar(Graphics2D g) {
+        drawHealthBar(g, (int) y - 10);
+    }
+
+    protected void drawHealthBar(Graphics2D g, int barY) {
         if (health >= maxHealth || dying) return;
         int barW = width;
         int barH = 4;
         int barX = (int) x;
-        int barY = (int) y - 10;
         g.setColor(Color.DARK_GRAY);
         g.fillRect(barX, barY, barW, barH);
         g.setColor(Color.RED);

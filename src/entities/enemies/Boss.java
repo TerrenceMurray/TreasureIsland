@@ -20,6 +20,10 @@ public abstract class Boss extends Enemy {
     private int jumpCooldown;
     private static final int JUMP_COOLDOWN_MAX = 90;
     private static final float JUMP_FORCE = -9f;
+    // Kinematic airborne state: y(t) = airStartY + airStartVel*t + ½·GRAVITY·t²
+    private int airTime;
+    private float airStartY;
+    private float airStartVel;
 
     public Boss(float x, float y, int width, int height, int health, int damage, int attackInterval, Player target, String bossName) {
         super(x, y, width, height, health, damage);
@@ -72,7 +76,7 @@ public abstract class Boss extends Enemy {
         // Jump toward player if they're on a higher platform
         if (dy < -60 && !inAir && jumpCooldown <= 0) {
             velocityY = JUMP_FORCE;
-            inAir = true;
+            setInAir(true);  // captures airStartY and airStartVel from current velocityY
             jumpCooldown = JUMP_COOLDOWN_MAX;
         }
 
@@ -118,4 +122,23 @@ public abstract class Boss extends Enemy {
     }
 
     protected abstract float getWalkSpeed();
+
+    @Override
+    public void applyGravity() {
+        if (!inAir) return;
+        airTime++;
+        // s = ut + ½at²
+        y = airStartY + airStartVel * airTime + 0.5f * GRAVITY * airTime * airTime;
+        velocityY = airStartVel + GRAVITY * airTime;
+    }
+
+    @Override
+    public void setInAir(boolean newInAir) {
+        if (newInAir && !inAir) {
+            airStartY = y;
+            airTime = 0;
+            airStartVel = velocityY;
+        }
+        super.setInAir(newInAir);
+    }
 }

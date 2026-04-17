@@ -8,6 +8,7 @@ import levels.Level2;
 import javax.swing.JPanel;
 import java.awt.Graphics2D;
 import java.awt.Dimension;
+import java.awt.Toolkit;
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.event.KeyEvent;
@@ -23,8 +24,8 @@ public class GamePanel extends JPanel implements Runnable, KeyListener {
     private static final long OPTIMAL_TIME = 1_000_000_000 / TARGET_FPS;
 
     private Thread gameThread;
-    private boolean isRunning;
-    private boolean isPaused;
+    private volatile boolean isRunning;
+    private volatile boolean isPaused;
 
     private BufferedImage buffer;
 
@@ -40,6 +41,11 @@ public class GamePanel extends JPanel implements Runnable, KeyListener {
         setFocusable(true);
         requestFocusInWindow();
         addKeyListener(this);
+
+        // Active rendering: tell Swing not to repaint the panel itself —
+        // we draw directly via getGraphics() from gameRender().
+        setIgnoreRepaint(true);
+        setDoubleBuffered(false);
 
         buffer = new BufferedImage(GAME_WIDTH, GAME_HEIGHT, BufferedImage.TYPE_INT_ARGB);
 
@@ -135,7 +141,7 @@ public class GamePanel extends JPanel implements Runnable, KeyListener {
     }
 
     public void gameRender() {
-        // Draw onto the back buffer (double buffering)
+        // Double buffering: draw the whole frame onto the back buffer first
         Graphics2D imageContext = (Graphics2D) buffer.getGraphics();
         String state = GameStateManager.getInstance().getState();
 
@@ -162,10 +168,11 @@ public class GamePanel extends JPanel implements Runnable, KeyListener {
             drawEndScreen(imageContext, "Victory!");
         }
 
-        // Blit the completed frame onto the panel in a single step
+        // Blit the completed frame to the panel in a single step
         Graphics2D g2 = (Graphics2D) getGraphics();
         if (g2 != null) {
             g2.drawImage(buffer, 0, 0, GAME_WIDTH, GAME_HEIGHT, null);
+            Toolkit.getDefaultToolkit().sync();
             g2.dispose();
         }
         imageContext.dispose();
@@ -249,8 +256,10 @@ public class GamePanel extends JPanel implements Runnable, KeyListener {
 
         if (e.getKeyCode() == KeyEvent.VK_P) {
             if (state.equals("PLAYING")) {
+                pauseGame();
                 GameStateManager.getInstance().setState("PAUSED");
             } else if (state.equals("PAUSED")) {
+                pauseGame();
                 GameStateManager.getInstance().setState("PLAYING");
             }
             return;
