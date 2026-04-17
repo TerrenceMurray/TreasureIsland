@@ -17,6 +17,9 @@ import java.awt.Toolkit;
 import java.awt.Color;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
+import java.awt.Cursor;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
 
 /**
@@ -66,6 +69,18 @@ public class GamePanel extends JPanel implements Runnable, KeyListener {
         setFocusable(true);
         requestFocusInWindow();
         addKeyListener(this);
+        MouseAdapter mouse = new MouseAdapter() {
+            @Override
+            public void mousePressed(MouseEvent e) {
+                handleMousePress(e.getX(), e.getY());
+            }
+            @Override
+            public void mouseMoved(MouseEvent e) {
+                handleMouseMove(e.getX(), e.getY());
+            }
+        };
+        addMouseListener(mouse);
+        addMouseMotionListener(mouse);
 
         // Active rendering: tell Swing not to repaint the panel itself —
         // we draw directly via getGraphics() from gameRender().
@@ -267,9 +282,9 @@ public class GamePanel extends JPanel implements Runnable, KeyListener {
                 hud.drawPauseOverlay(imageContext);
             }
         } else if (state.equals("GAME_OVER")) {
-            hud.drawEndScreen(imageContext, "Game Over");
+            hud.drawEndScreen(imageContext, "Game Over", "Try Again");
         } else if (state.equals("VICTORY")) {
-            hud.drawEndScreen(imageContext, "Victory!");
+            hud.drawEndScreen(imageContext, "Victory!", "Play Again");
         }
 
         // Blit the completed frame to the panel in a single step
@@ -298,7 +313,11 @@ public class GamePanel extends JPanel implements Runnable, KeyListener {
         }
 
         if (state.equals("GAME_OVER") || state.equals("VICTORY")) {
-            if (e.getKeyCode() == KeyEvent.VK_Q) {
+            if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+                SoundManager.getInstance().playClip("confirm", false);
+                startNewGame();
+                SoundManager.getInstance().playClip("bgMusic", true);
+            } else if (e.getKeyCode() == KeyEvent.VK_Q) {
                 System.exit(0);
             }
             return;
@@ -360,4 +379,35 @@ public class GamePanel extends JPanel implements Runnable, KeyListener {
 
     @Override
     public void keyTyped(KeyEvent e) {}
+
+    /**
+        Routes a mouse press on the panel to the end-screen buttons.
+        Clicks are only meaningful on the Game Over / Victory screens;
+        on other states this is a no-op.
+    */
+    private void handleMousePress(int mx, int my) {
+        String state = GameStateManager.getInstance().getState();
+        if (!state.equals("GAME_OVER") && !state.equals("VICTORY")) return;
+        if (hud.hitPrimary(mx, my)) {
+            SoundManager.getInstance().playClip("confirm", false);
+            startNewGame();
+            SoundManager.getInstance().playClip("bgMusic", true);
+        } else if (hud.hitQuit(mx, my)) {
+            System.exit(0);
+        }
+    }
+
+    /**
+        Tracks the mouse for end-screen button hover highlighting.
+        Updates the system cursor to a hand when the pointer is over
+        a clickable button, otherwise restores the default cursor.
+    */
+    private void handleMouseMove(int mx, int my) {
+        hud.setMousePosition(mx, my);
+        String state = GameStateManager.getInstance().getState();
+        boolean overButton = (state.equals("GAME_OVER") || state.equals("VICTORY"))
+            && (hud.hitPrimary(mx, my) || hud.hitQuit(mx, my));
+        setCursor(Cursor.getPredefinedCursor(
+            overButton ? Cursor.HAND_CURSOR : Cursor.DEFAULT_CURSOR));
+    }
 }

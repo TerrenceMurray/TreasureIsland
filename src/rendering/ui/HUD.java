@@ -6,6 +6,7 @@ import entities.Player;
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.Graphics2D;
+import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 
 /**
@@ -35,6 +36,14 @@ public class HUD {
     private static final Color DIMMED = new Color(220, 220, 220);
     private static final Color OVERLAY_DIM = new Color(0, 0, 0, 120);
     private static final Color OVERLAY_DARK = new Color(0, 0, 0, 140);
+    private static final Color BTN_FILL = new Color(90, 50, 30);
+    private static final Color BTN_FILL_HOVER = new Color(135, 80, 45);
+    private static final Color BTN_BORDER = new Color(40, 25, 15);
+    private static final Color BTN_BORDER_HOVER = GOLD;
+
+    // === End-screen button dimensions ===
+    private static final int BTN_W = 180;
+    private static final int BTN_H = 36;
 
     // === Screen dimensions ===
     private final int screenWidth;
@@ -47,6 +56,14 @@ public class HUD {
 
     // === Player reference for the hearts ===
     private Player player;
+
+    // === End-screen button hit boxes (updated each time the screen is drawn) ===
+    private Rectangle2D primaryBtn;
+    private Rectangle2D quitBtn;
+
+    // === Live mouse position used for hover highlighting on end screens ===
+    private int mouseX = -1;
+    private int mouseY = -1;
 
     public HUD(Player player, int screenWidth, int screenHeight) {
         this.player = player;
@@ -65,6 +82,16 @@ public class HUD {
         this.player = player;
     }
 
+    /**
+        Records the latest mouse position so end-screen buttons can
+        render their hover highlight. Callers should update this on
+        every mouse move.
+    */
+    public void setMousePosition(int x, int y) {
+        this.mouseX = x;
+        this.mouseY = y;
+    }
+
     // ---------- Top-level screens ----------
 
     /**
@@ -78,16 +105,37 @@ public class HUD {
     }
 
     /**
-        Draws the Game Over / Victory end screen with a dark overlay
-        and the final score.
+        Draws the Game Over / Victory end screen with a dark overlay,
+        the final score, and primary / quit buttons. The primary label
+        differs per screen ("Try Again" on death, "Play Again" after
+        victory). Button bounds are stored for mouse hit-testing.
     */
-    public void drawEndScreen(Graphics2D g, String title) {
+    public void drawEndScreen(Graphics2D g, String title, String primaryLabel) {
         g.setColor(OVERLAY_DARK);
         g.fillRect(0, 0, screenWidth, screenHeight);
-        drawUiPanel(g, 260, 320);
-        drawCentered(g, title, 40, GOLD, screenHeight / 2 - 40);
-        drawCentered(g, "Score: " + GameStateManager.getInstance().getScore(), 22, Color.WHITE, screenHeight / 2 + 10);
-        drawCentered(g, "Press Q to Quit", 14, DIMMED, screenHeight / 2 + 50);
+        drawUiPanel(g, 260, 360);
+        drawCentered(g, title, 40, GOLD, screenHeight / 2 - 70);
+        drawCentered(g, "Score: " + GameStateManager.getInstance().getScore(), 22, Color.WHITE, screenHeight / 2 - 20);
+        primaryBtn = drawButton(g, primaryLabel, screenHeight / 2 + 30);
+        quitBtn    = drawButton(g, "Quit",       screenHeight / 2 + 80);
+    }
+
+    /**
+        Returns true if the given panel-local coordinates fall inside
+        the primary (Try Again / Play Again) button drawn on the end
+        screen. Callers should only check this while the end screen is
+        showing.
+    */
+    public boolean hitPrimary(int x, int y) {
+        return primaryBtn != null && primaryBtn.contains(x, y);
+    }
+
+    /**
+        Returns true if the given panel-local coordinates fall inside
+        the Quit button drawn on the end screen.
+    */
+    public boolean hitQuit(int x, int y) {
+        return quitBtn != null && quitBtn.contains(x, y);
     }
 
     /**
@@ -174,6 +222,30 @@ public class HUD {
     }
 
     // ---------- Drawing helpers ----------
+
+    /**
+        Draws a dark-wood rectangular button with a gold label at the
+        given vertical center, and returns its bounds so the caller
+        can hit-test mouse clicks against it.
+    */
+    private Rectangle2D drawButton(Graphics2D g, String label, int centerY) {
+        int x = (screenWidth - BTN_W) / 2;
+        int y = centerY - BTN_H / 2;
+        Rectangle2D bounds = new Rectangle2D.Double(x, y, BTN_W, BTN_H);
+        boolean hovered = bounds.contains(mouseX, mouseY);
+
+        g.setColor(hovered ? BTN_FILL_HOVER : BTN_FILL);
+        g.fillRect(x, y, BTN_W, BTN_H);
+        g.setColor(hovered ? BTN_BORDER_HOVER : BTN_BORDER);
+        g.drawRect(x, y, BTN_W - 1, BTN_H - 1);
+
+        int size = 18;
+        int textX = x + (BTN_W - measureWidth(g, label, size)) / 2;
+        // Baseline offset: centre the cap-height inside the button box.
+        int textY = y + BTN_H / 2 + size / 3;
+        drawOutlined(g, label, textX, textY, size, GOLD);
+        return bounds;
+    }
 
     private void drawUiPanel(Graphics2D g, int w, int h) {
         if (uiBoard == null) return;
