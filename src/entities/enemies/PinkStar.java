@@ -11,6 +11,7 @@ public class PinkStar extends Enemy {
     private static final String SPRITE_BASE = "assets/Treasure Hunters/The Crusty Crew/Sprites/Pink Star/";
     private static final String DIALOGUE_BASE = "assets/Treasure Hunters/The Crusty Crew/Sprites/Dialogue/Exclamation/";
     private static final int DRAW_SCALE = 2;
+    private static final int FOOT_PADDING = 1 * DRAW_SCALE;
 
     private float patrolSpeed = 0.6f;
     private float patrolLeft;
@@ -137,7 +138,7 @@ public class PinkStar extends Enemy {
         int drawW = 34 * DRAW_SCALE;
         int drawH = 30 * DRAW_SCALE;
         int drawX = (int) x - (drawW - width) / 2;
-        int drawY = (int) y + height - drawH + 4;
+        int drawY = (int) y + height - drawH + FOOT_PADDING;
         drawWithDeathFade(g, () -> sprite.draw(g, drawX, drawY, drawW, drawH));
         drawHealthBar(g);
 

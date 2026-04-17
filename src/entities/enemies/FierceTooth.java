@@ -8,10 +8,11 @@ public class FierceTooth extends Boss {
 
     private static final String SPRITE_BASE = "assets/Treasure Hunters/The Crusty Crew/Sprites/Fierce Tooth/";
     private static final int DRAW_SCALE = 2;
+    private static final int FOOT_PADDING = 2 * DRAW_SCALE;
     private AnimatedSprite attackEffect;
 
     public FierceTooth(float x, float y, Player target) {
-        super(x, y, 56, 64, 6, 1, 150, target);
+        super(x, y, 56, 64, 6, 1, 150, target, "Fierce Tooth");
         initSprite();
     }
 
@@ -49,9 +50,10 @@ public class FierceTooth extends Boss {
         int drawW = 34 * DRAW_SCALE;
         int drawH = 30 * DRAW_SCALE;
         int drawX = (int) x - (drawW - width) / 2;
-        int drawY = (int) y + height - drawH + 10;
+        int drawY = (int) y + height - drawH + FOOT_PADDING;
         drawWithDeathFade(g, () -> sprite.draw(g, drawX, drawY, drawW, drawH));
         drawHealthBar(g);
+        drawBossName(g);
     }
 
     @Override

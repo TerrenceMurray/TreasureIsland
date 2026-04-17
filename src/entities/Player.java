@@ -21,6 +21,8 @@ public class Player extends GameEntity implements Attackable {
     private static final int ATTACK_HEIGHT = CFG.getInt("player.attackHeight", 35);
     private static final int ATTACK_COOLDOWN = CFG.getInt("player.attackCooldown", 25);
     private static final int DRAW_SCALE = 2;
+    // Empty pixels below the character's feet in source frames (8 src × scale)
+    private static final int FOOT_PADDING = 8 * DRAW_SCALE;
     private static final String SPRITE_BASE = "assets/Treasure Hunters/Captain Clown Nose/Sprites/Captain Clown Nose/Captain Clown Nose with Sword/";
 
     private int levelWidth;
@@ -174,7 +176,7 @@ public class Player extends GameEntity implements Attackable {
         int drawW = 64 * DRAW_SCALE;
         int drawH = 40 * DRAW_SCALE;
         int drawX = (int) x - (drawW - width) / 2;
-        int drawY = (int) y + height - drawH + 22;
+        int drawY = (int) y + height - drawH + FOOT_PADDING;
 
         if (dying) {
             float alpha = deathTimer > DEATH_GROUND_DURATION ? 1f : (float) deathTimer / DEATH_GROUND_DURATION;

@@ -9,6 +9,7 @@ public class Crabby extends Enemy {
 
     private static final String SPRITE_BASE = "assets/Treasure Hunters/The Crusty Crew/Sprites/Crabby/";
     private static final int DRAW_SCALE = 2;
+    private static final int FOOT_PADDING = 3 * DRAW_SCALE;
 
     private float detectionRange = 100f;
     private float leashRange = 180f;
@@ -151,7 +152,7 @@ public class Crabby extends Enemy {
         int drawW = 72 * DRAW_SCALE;
         int drawH = 32 * DRAW_SCALE;
         int drawX = (int) x - (drawW - width) / 2;
-        int drawY = (int) y + height - drawH + 10;
+        int drawY = (int) y + height - drawH + FOOT_PADDING;
         drawWithDeathFade(g, () -> sprite.draw(g, drawX, drawY, drawW, drawH));
 
         // Health bar above sprite

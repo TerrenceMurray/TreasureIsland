@@ -15,6 +15,10 @@ public class Level2 extends Level {
             "assets/Treasure Hunters/Palm Tree Island/Sprites/Background/BG Image.png",
             "Palm Tree Island");
 
+        GameConfig cfg = GameConfig.getInstance();
+        groundOffset = cfg.getInt("level2.groundOffset", -4);
+        terrain.setPlatformLift(cfg.getInt("level2.platformLift", 0));
+
         // Back trees — in open ground areas
         palmTrees.setBackPlacements(new int[][] {
             {100, 480, 0},
